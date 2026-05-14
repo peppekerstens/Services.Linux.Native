@@ -1,0 +1,46 @@
+using System.Management.Automation;
+
+namespace Microsoft.PowerShell.Commands
+{
+    [Cmdlet(VerbsCommon.Remove, "Service", SupportsShouldProcess = true,
+        ConfirmImpact = ConfirmImpact.High)]
+    public sealed class RemoveServiceCommand : PSCmdlet
+    {
+        [Parameter(Mandatory = true, Position = 0,
+            ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
+        [ValidateNotNullOrEmpty]
+        public string Name { get; set; } = string.Empty;
+
+        protected override void ProcessRecord()
+        {
+            string unitName = SystemdHelper.ResolveUnitName(Name);
+
+            if (!ShouldProcess(unitName, "Stop, disable, and delete systemd service unit")) return;
+
+            try { SystemdHelper.StopUnit(unitName); }
+            catch (Exception) { }
+
+            try { SystemdHelper.DisableUnits(new[] { unitName }); }
+            catch (Exception) { }
+
+            try { SystemdHelper.RemoveUnitFile(unitName); }
+            catch (Exception ex)
+            {
+                WriteError(new ErrorRecord(
+                    new InvalidOperationException(
+                        $"Failed to remove unit file for {unitName}: {ex.Message}", ex),
+                    "UnitFileRemoveFailed", ErrorCategory.WriteError, unitName));
+                return;
+            }
+
+            try { SystemdHelper.DaemonReload(); }
+            catch (Exception ex)
+            {
+                WriteError(new ErrorRecord(
+                    new InvalidOperationException(
+                        $"Removed unit file but daemon-reload failed: {ex.Message}", ex),
+                    "DaemonReloadFailed", ErrorCategory.OperationStopped, unitName));
+            }
+        }
+    }
+}

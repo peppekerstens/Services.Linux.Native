@@ -1,0 +1,31 @@
+name: Pester
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  pester-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        distro: [ubuntu:24.04, debian:12, fedora:40, opensuse/tumbleweed, archlinux]
+    container:
+      image: ghcr.io/peppekerstens/pwsh-pester-${{ matrix.distro }}
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build module
+        run: dotnet build --configuration Release src/Services.Linux.Native/
+      - name: Run Pester tests
+        shell: pwsh
+        run: |
+          Import-Module ./src/Services.Linux.Native/bin/Release/net8.0/Services.Linux.Native.dll
+          Invoke-Pester ./tests/ -OutputFormat NUnitXml -OutputFile results.xml
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pester-${{ matrix.distro }}
+          path: results.xml
