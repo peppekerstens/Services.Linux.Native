@@ -1,5 +1,7 @@
 using System.Management.Automation;
 
+using Tmds.DBus.Protocol;
+
 namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsCommon.New, "Service", SupportsShouldProcess = true)]
@@ -38,9 +40,11 @@ namespace Microsoft.PowerShell.Commands
                 return;
             }
 
+            using DBusConnection conn = SystemdHelper.OpenSystem();
+
             try
             {
-                SystemdHelper.DaemonReload();
+                SystemdHelper.DaemonReload(conn);
             }
             catch (Exception ex)
             {
@@ -53,7 +57,7 @@ namespace Microsoft.PowerShell.Commands
 
             if (StartupType == ServiceStartupType.Automatic)
             {
-                try { SystemdHelper.EnableUnits(new[] { unitName }); }
+                try { SystemdHelper.EnableUnits(conn, new[] { unitName }); }
                 catch (Exception ex)
                 {
                     WriteError(new ErrorRecord(

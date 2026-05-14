@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.IO;
 using System.Management.Automation;
 
 using Tmds.DBus.Protocol;
@@ -11,17 +13,12 @@ namespace Microsoft.PowerShell.Commands
         internal const string ManagerIface = "org.freedesktop.systemd1.Manager";
         internal const string UnitIface    = "org.freedesktop.systemd1.Unit";
         internal const string PropsIface   = "org.freedesktop.DBus.Properties";
-
-        internal const int LU_Name        = 0;
-        internal const int LU_Desc        = 1;
-        internal const int LU_LoadState   = 2;
-        internal const int LU_ActiveState = 3;
-        internal const int LU_SubState    = 4;
     }
 
     internal static class SystemdHelper
     {
-        private static DBusConnection OpenSystem()
+        // PS runspace has no SynchronizationContext; blocking .GetAwaiter().GetResult() is safe here.
+        internal static DBusConnection OpenSystem()
         {
             var conn = new DBusConnection(DBusAddress.System!);
             conn.ConnectAsync().GetAwaiter().GetResult();
@@ -63,7 +60,7 @@ namespace Microsoft.PowerShell.Commands
                             list.Add((name, desc, active, sub));
                     }
                     return list;
-                });
+                }).ConfigureAwait(false);
 
                 foreach (var (name, desc, active, sub) in reply)
                 {
@@ -95,7 +92,7 @@ namespace Microsoft.PowerShell.Commands
                             list.Add((file, state));
                     }
                     return list;
-                });
+                }).ConfigureAwait(false);
 
                 foreach (var (file, state) in reply)
                 {
@@ -152,53 +149,106 @@ namespace Microsoft.PowerShell.Commands
             return false;
         }
 
+        // PS runspace has no SynchronizationContext; blocking .GetAwaiter().GetResult() is safe here.
         internal static void StartUnit(string unitName)
-            => UnitActionAsync("StartUnit", unitName).GetAwaiter().GetResult();
-
-        internal static void StopUnit(string unitName)
-            => UnitActionAsync("StopUnit", unitName).GetAwaiter().GetResult();
-
-        internal static void RestartUnit(string unitName)
-            => UnitActionAsync("RestartUnit", unitName).GetAwaiter().GetResult();
-
-        private static async Task UnitActionAsync(string method, string unitName)
         {
             using var conn = OpenSystem();
+            StartUnit(conn, unitName);
+        }
+
+        internal static void StartUnit(DBusConnection conn, string unitName)
+        {
+            UnitActionAsync(conn, "StartUnit", unitName).GetAwaiter().GetResult();
+        }
+
+        // PS runspace has no SynchronizationContext; blocking .GetAwaiter().GetResult() is safe here.
+        internal static void StopUnit(string unitName)
+        {
+            using var conn = OpenSystem();
+            StopUnit(conn, unitName);
+        }
+
+        internal static void StopUnit(DBusConnection conn, string unitName)
+        {
+            UnitActionAsync(conn, "StopUnit", unitName).GetAwaiter().GetResult();
+        }
+
+        // PS runspace has no SynchronizationContext; blocking .GetAwaiter().GetResult() is safe here.
+        internal static void RestartUnit(string unitName)
+        {
+            using var conn = OpenSystem();
+            RestartUnit(conn, unitName);
+        }
+
+        internal static void RestartUnit(DBusConnection conn, string unitName)
+        {
+            UnitActionAsync(conn, "RestartUnit", unitName).GetAwaiter().GetResult();
+        }
+
+        private static async Task UnitActionAsync(DBusConnection conn, string method, string unitName)
+        {
             var msg = BuildCallSS(conn, method, unitName, "replace");
             await conn.CallMethodAsync(msg, static (Message m, object? _) =>
-                m.GetBodyReader().ReadObjectPath());
+                m.GetBodyReader().ReadObjectPath()).ConfigureAwait(false);
         }
 
+        // PS runspace has no SynchronizationContext; blocking .GetAwaiter().GetResult() is safe here.
         internal static void EnableUnits(string[] unitNames)
-            => EnableUnitsAsync(unitNames).GetAwaiter().GetResult();
-
-        private static async Task EnableUnitsAsync(string[] unitNames)
         {
             using var conn = OpenSystem();
+            EnableUnits(conn, unitNames);
+        }
+
+        internal static void EnableUnits(DBusConnection conn, string[] unitNames)
+        {
+            EnableUnitsAsync(conn, unitNames).GetAwaiter().GetResult();
+        }
+
+        private static async Task EnableUnitsAsync(DBusConnection conn, string[] unitNames)
+        {
             var msg = BuildEnableMessage(conn, unitNames, runtime: false, force: false);
-            await conn.CallMethodAsync(msg, static (Message m, object? _) => 0);
+            await conn.CallMethodAsync(msg, static (Message m, object? _) => 0).ConfigureAwait(false);
         }
 
+        // PS runspace has no SynchronizationContext; blocking .GetAwaiter().GetResult() is safe here.
         internal static void DisableUnits(string[] unitNames)
-            => DisableUnitsAsync(unitNames).GetAwaiter().GetResult();
-
-        private static async Task DisableUnitsAsync(string[] unitNames)
         {
             using var conn = OpenSystem();
-            var msg = BuildDisableMessage(conn, unitNames, runtime: false);
-            await conn.CallMethodAsync(msg, static (Message m, object? _) => 0);
+            DisableUnits(conn, unitNames);
         }
 
+        internal static void DisableUnits(DBusConnection conn, string[] unitNames)
+        {
+            DisableUnitsAsync(conn, unitNames).GetAwaiter().GetResult();
+        }
+
+        private static async Task DisableUnitsAsync(DBusConnection conn, string[] unitNames)
+        {
+            var msg = BuildDisableMessage(conn, unitNames, runtime: false);
+            await conn.CallMethodAsync(msg, static (Message m, object? _) => 0).ConfigureAwait(false);
+        }
+
+        // PS runspace has no SynchronizationContext; blocking .GetAwaiter().GetResult() is safe here.
         internal static void DaemonReload()
         {
             using var conn = OpenSystem();
+            DaemonReload(conn);
+        }
+
+        internal static void DaemonReload(DBusConnection conn)
+        {
             var msg = BuildCall(conn, "Reload");
             conn.CallMethodAsync(msg, static (Message m, object? _) => 0).GetAwaiter().GetResult();
         }
 
         internal static void WriteUnitFile(string unitName, string description, string execStart)
         {
-            string unitPath = $"/etc/systemd/system/{unitName}";
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                throw new PlatformNotSupportedException("New-Service is not supported on Windows.");
+
+            string unitDir = IsNonRoot() ? GetUserUnitDir() : "/etc/systemd/system/";
+            Directory.CreateDirectory(unitDir);
+            string unitPath = System.IO.Path.Combine(unitDir, unitName);
             var lines = new[]
             {
                 "[Unit]",
@@ -216,9 +266,40 @@ namespace Microsoft.PowerShell.Commands
 
         internal static void RemoveUnitFile(string unitName)
         {
-            string unitPath = $"/etc/systemd/system/{unitName}";
+            if (Environment.OSVersion.Platform == PlatformID.Win32NT)
+                throw new PlatformNotSupportedException("Remove-Service is not supported on Windows.");
+
+            string unitDir = IsNonRoot() ? GetUserUnitDir() : "/etc/systemd/system/";
+            string unitPath = System.IO.Path.Combine(unitDir, unitName);
             if (System.IO.File.Exists(unitPath))
                 System.IO.File.Delete(unitPath);
+        }
+
+        private static bool IsNonRoot()
+        {
+            try
+            {
+                using var proc = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "id",
+                    Arguments = "-u",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false
+                })!;
+                var output = proc.StandardOutput.ReadToEnd();
+                proc.WaitForExit();
+                return !output.Trim().Equals("0");
+            }
+            catch { return true; }
+        }
+
+        private static string GetUserUnitDir()
+        {
+            string configHome = Environment.GetEnvironmentVariable("XDG_CONFIG_HOME")
+                ?? System.IO.Path.Combine(
+                    Environment.GetEnvironmentVariable("HOME") ?? "/root",
+                    ".config");
+            return System.IO.Path.Combine(configHome, "systemd", "user");
         }
 
         private static MessageBuffer BuildCall(DBusConnection conn, string member)

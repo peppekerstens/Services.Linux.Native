@@ -1,5 +1,7 @@
 using System.Management.Automation;
 
+using Tmds.DBus.Protocol;
+
 namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsCommon.Set, "Service", DefaultParameterSetName = "Name",
@@ -33,14 +35,16 @@ namespace Microsoft.PowerShell.Commands
 
             if (!ShouldProcess(unitName, "Set")) return;
 
+            using DBusConnection conn = SystemdHelper.OpenSystem();
+
             if (StartupType != ServiceStartupType.InvalidValue)
             {
                 try
                 {
                     if (StartupType == ServiceStartupType.Disabled)
-                        SystemdHelper.DisableUnits(new[] { unitName });
+                        SystemdHelper.DisableUnits(conn, new[] { unitName });
                     else
-                        SystemdHelper.EnableUnits(new[] { unitName });
+                        SystemdHelper.EnableUnits(conn, new[] { unitName });
                 }
                 catch (Exception ex)
                 {
@@ -57,9 +61,9 @@ namespace Microsoft.PowerShell.Commands
                 try
                 {
                     if (Status == "Running")
-                        SystemdHelper.StartUnit(unitName);
+                        SystemdHelper.StartUnit(conn, unitName);
                     else
-                        SystemdHelper.StopUnit(unitName);
+                        SystemdHelper.StopUnit(conn, unitName);
                 }
                 catch (Exception ex)
                 {

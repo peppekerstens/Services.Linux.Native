@@ -1,5 +1,7 @@
 using System.Management.Automation;
 
+using Tmds.DBus.Protocol;
+
 namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsCommon.Remove, "Service", SupportsShouldProcess = true,
@@ -17,10 +19,12 @@ namespace Microsoft.PowerShell.Commands
 
             if (!ShouldProcess(unitName, "Stop, disable, and delete systemd service unit")) return;
 
-            try { SystemdHelper.StopUnit(unitName); }
+            using DBusConnection conn = SystemdHelper.OpenSystem();
+
+            try { SystemdHelper.StopUnit(conn, unitName); }
             catch (Exception) { }
 
-            try { SystemdHelper.DisableUnits(new[] { unitName }); }
+            try { SystemdHelper.DisableUnits(conn, new[] { unitName }); }
             catch (Exception) { }
 
             try { SystemdHelper.RemoveUnitFile(unitName); }
@@ -33,7 +37,7 @@ namespace Microsoft.PowerShell.Commands
                 return;
             }
 
-            try { SystemdHelper.DaemonReload(); }
+            try { SystemdHelper.DaemonReload(conn); }
             catch (Exception ex)
             {
                 WriteError(new ErrorRecord(
