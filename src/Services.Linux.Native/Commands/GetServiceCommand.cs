@@ -1,3 +1,6 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 using System.Management.Automation;
 using Tmds.DBus.Protocol;
 

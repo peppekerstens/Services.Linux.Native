@@ -1,9 +1,11 @@
+// Copyright (c) Microsoft Corporation.
+// Licensed under the MIT License.
+
 using System.Management.Automation;
 
 namespace Microsoft.PowerShell.Commands
 {
-    [Cmdlet(VerbsLifecycle.Suspend, "Service", DefaultParameterSetName = "Name",
-        SupportsShouldProcess = true)]
+    [Cmdlet(VerbsLifecycle.Suspend, "Service", DefaultParameterSetName = "Name")]
     [OutputType(typeof(LinuxServiceInfo))]
     public sealed class SuspendServiceCommand : ServiceUnixBase
     {
