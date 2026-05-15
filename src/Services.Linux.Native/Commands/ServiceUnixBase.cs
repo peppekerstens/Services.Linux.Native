@@ -18,17 +18,16 @@ namespace Microsoft.PowerShell.Commands
 
         protected override void ProcessRecord()
         {
-            IEnumerable<LinuxServiceInfo> services;
+            IEnumerable<string> unitNames;
             if (ParameterSetName == "InputObject" && InputObject is not null)
-                services = SystemdHelper.GetServices(
-                    System.Array.ConvertAll(InputObject, s => s.Name));
+                unitNames = System.Array.ConvertAll(InputObject, s => s.Name);
             else if (Name is not null)
-                services = SystemdHelper.GetServices(Name);
+                unitNames = System.Array.ConvertAll(Name, SystemdHelper.ResolveUnitName);
             else
                 return;
 
-            foreach (var svc in services)
-                OperateOnService(svc.Name);
+            foreach (var name in unitNames)
+                OperateOnService(name);
         }
 
         protected abstract void OperateOnService(string unitName);

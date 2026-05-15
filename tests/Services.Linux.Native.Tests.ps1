@@ -77,7 +77,7 @@ Describe 'Output types' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
     }
 }
 
-Describe 'Suspend-Service and Resume-Service are stubs' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
+Describe 'Suspend-Service and Resume-Service are stubs' -Skip:(-not $script:OnLinux) {
     It 'Suspend-Service writes a PlatformNotSupported error' {
         $err = $null
         Suspend-Service -Name sshd -ErrorVariable err -EA SilentlyContinue
@@ -111,7 +111,7 @@ Describe 'Get-Service' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
 
 }
 
-Describe 'Start/Stop/Restart-Service -WhatIf' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
+Describe 'Start/Stop/Restart-Service -WhatIf' -Skip:(-not $script:OnLinux) {
     It 'Start-Service -WhatIf does not throw' {
         { Start-Service -Name sshd -WhatIf } | Should -Not -Throw
     }
