@@ -192,8 +192,16 @@ namespace Microsoft.PowerShell.Commands
         private static async Task UnitActionAsync(DBusConnection conn, string method, string unitName)
         {
             var msg = BuildCallSS(conn, method, unitName, "replace");
-            await conn.CallMethodAsync(msg, static (Message m, object? _) =>
-                m.GetBodyReader().ReadObjectPath()).ConfigureAwait(false);
+            try
+            {
+                await conn.CallMethodAsync(msg, static (Message m, object? _) =>
+                    m.GetBodyReader().ReadObjectPath()).ConfigureAwait(false);
+            }
+            catch (DBusExceptionBase ex) when (ex.Message.Contains("InteractiveAuthorizationRequired"))
+            {
+                throw new InvalidOperationException(
+                    $"{method.Replace("Unit", string.Empty)} {unitName} failed: root privileges are required. Use 'sudo pwsh'.", ex);
+            }
         }
 
         // PS runspace has no SynchronizationContext; blocking .GetAwaiter().GetResult() is safe here.
