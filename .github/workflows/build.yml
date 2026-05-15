@@ -2,9 +2,8 @@ name: Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, master]
   pull_request:
-    branches: [main]
   workflow_dispatch:
 
 jobs:
@@ -12,8 +11,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0'
-      - run: dotnet build --configuration Release src/Services.Linux.Native/
-      - run: dotnet build --configuration Debug src/Services.Linux.Native/
+
+      - name: Restore
+        run: dotnet restore src/Services.Linux.Native/Services.Linux.Native.csproj
+
+      - name: Build (Release)
+        run: dotnet build src/Services.Linux.Native/Services.Linux.Native.csproj --configuration Release --no-restore
+
+      - name: Build (Debug)
+        run: dotnet build src/Services.Linux.Native/Services.Linux.Native.csproj --configuration Debug --no-restore

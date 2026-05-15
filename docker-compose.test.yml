@@ -1,0 +1,121 @@
+# Docker Compose test file for Services.Linux.Native
+# Works with both `docker compose` and `podman compose` on any host.
+#
+# Usage:
+#   docker compose -f docker-compose.test.yml up
+#   podman compose -f docker-compose.test.yml up
+#
+# Run a single distro:
+#   docker compose -f docker-compose.test.yml run ubuntu-24
+#   podman compose -f docker-compose.test.yml run debian-12
+
+services:
+  ubuntu-24:
+    image: ghcr.io/peppekerstens/pwsh-pester-ubuntu:24.04
+    privileged: true
+    volumes:
+      - ".:/module"
+    working_dir: /module
+    command: >
+      bash -c "
+        if ! command -v dotnet &>/dev/null; then
+          curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir /usr/share/dotnet &&
+          ln -sf /usr/share/dotnet/dotnet /usr/local/bin/dotnet;
+        fi &&
+        dotnet build src/Services.Linux.Native/Services.Linux.Native.csproj --configuration Release &&
+        pwsh -NoProfile -Command \"
+          \$$config = New-PesterConfiguration;
+          \$$config.Run.Path = 'tests/Services.Linux.Native.Tests.ps1';
+          \$$config.Run.Exit = \$$true;
+          \$$config.Output.Verbosity = 'Detailed';
+          Invoke-Pester -Configuration \$$config
+        \"
+      "
+
+  debian-12:
+    image: ghcr.io/peppekerstens/pwsh-pester-debian:12
+    privileged: true
+    volumes:
+      - ".:/module"
+    working_dir: /module
+    command: >
+      bash -c "
+        if ! command -v dotnet &>/dev/null; then
+          curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir /usr/share/dotnet &&
+          ln -sf /usr/share/dotnet/dotnet /usr/local/bin/dotnet;
+        fi &&
+        dotnet build src/Services.Linux.Native/Services.Linux.Native.csproj --configuration Release &&
+        pwsh -NoProfile -Command \"
+          \$$config = New-PesterConfiguration;
+          \$$config.Run.Path = 'tests/Services.Linux.Native.Tests.ps1';
+          \$$config.Run.Exit = \$$true;
+          \$$config.Output.Verbosity = 'Detailed';
+          Invoke-Pester -Configuration \$$config
+        \"
+      "
+
+  fedora-40:
+    image: ghcr.io/peppekerstens/pwsh-pester-fedora:40
+    privileged: true
+    volumes:
+      - ".:/module"
+    working_dir: /module
+    command: >
+      bash -c "
+        if ! command -v dotnet &>/dev/null; then
+          curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir /usr/share/dotnet &&
+          ln -sf /usr/share/dotnet/dotnet /usr/local/bin/dotnet;
+        fi &&
+        dotnet build src/Services.Linux.Native/Services.Linux.Native.csproj --configuration Release &&
+        pwsh -NoProfile -Command \"
+          \$$config = New-PesterConfiguration;
+          \$$config.Run.Path = 'tests/Services.Linux.Native.Tests.ps1';
+          \$$config.Run.Exit = \$$true;
+          \$$config.Output.Verbosity = 'Detailed';
+          Invoke-Pester -Configuration \$$config
+        \"
+      "
+
+  opensuse-tumbleweed:
+    image: ghcr.io/peppekerstens/pwsh-pester-opensuse:tumbleweed
+    privileged: true
+    volumes:
+      - ".:/module"
+    working_dir: /module
+    command: >
+      bash -c "
+        if ! command -v dotnet &>/dev/null; then
+          curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir /usr/share/dotnet &&
+          ln -sf /usr/share/dotnet/dotnet /usr/local/bin/dotnet;
+        fi &&
+        dotnet build src/Services.Linux.Native/Services.Linux.Native.csproj --configuration Release &&
+        pwsh -NoProfile -Command \"
+          \$$config = New-PesterConfiguration;
+          \$$config.Run.Path = 'tests/Services.Linux.Native.Tests.ps1';
+          \$$config.Run.Exit = \$$true;
+          \$$config.Output.Verbosity = 'Detailed';
+          Invoke-Pester -Configuration \$$config
+        \"
+      "
+
+  arch:
+    image: ghcr.io/peppekerstens/pwsh-pester-arch:latest
+    privileged: true
+    volumes:
+      - ".:/module"
+    working_dir: /module
+    command: >
+      bash -c "
+        if ! command -v dotnet &>/dev/null; then
+          curl -sSL https://dot.net/v1/dotnet-install.sh | bash /dev/stdin --channel 8.0 --install-dir /usr/share/dotnet &&
+          ln -sf /usr/share/dotnet/dotnet /usr/local/bin/dotnet;
+        fi &&
+        dotnet build src/Services.Linux.Native/Services.Linux.Native.csproj --configuration Release &&
+        pwsh -NoProfile -Command \"
+          \$$config = New-PesterConfiguration;
+          \$$config.Run.Path = 'tests/Services.Linux.Native.Tests.ps1';
+          \$$config.Run.Exit = \$$true;
+          \$$config.Output.Verbosity = 'Detailed';
+          Invoke-Pester -Configuration \$$config
+        \"
+      "
