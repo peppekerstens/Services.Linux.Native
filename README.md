@@ -84,7 +84,7 @@ Remove-Service -Name myapp -WhatIf
 
 ## Manual Testing
 
-For a detailed, step-by-step guide on setting up your environment and testing these modules, see the blog post: [Testing the native layer](https://peppekerstens.github.io/blog/testing-the-native-layer).
+For a detailed, step-by-step guide on setting up your environment and testing these modules, see the blog post: [Testing the native layer](https://peppekerstens.github.io/testing-the-native-layer/).
 
 ### Option 1: Interactive Container (Recommended)
 Use the pre-built CI images to avoid dependency issues.
@@ -93,22 +93,6 @@ Use the pre-built CI images to avoid dependency issues.
 # Start an interactive shell in the Ubuntu 24.04 test container
 docker compose -f docker-compose.test.yml run ubuntu-24 pwsh
 ```
-Once inside:
-```powershell
-Import-Module /module/bin/Release/net8.0/publish/Services.Linux.Native.dll
-Get-Service
-```
-
-### Option 2: Bare WSL
-Test directly in your WSL distro (requires `.NET 8 SDK`).
-
-```powershell
-dotnet publish src/Services.Linux.Native --configuration Release --output bin/Release/net8.0/publish
-pwsh
-Import-Module ./bin/Release/net8.0/publish/Services.Linux.Native.dll
-Get-Service
-```
-
 Once inside:
 ```powershell
 Import-Module /module/bin/Release/net8.0/publish/Services.Linux.Native.dll
