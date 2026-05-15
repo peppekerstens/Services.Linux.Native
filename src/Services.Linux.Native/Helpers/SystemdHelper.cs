@@ -91,8 +91,9 @@ namespace Microsoft.PowerShell.Commands
                         reader.AlignStruct();
                         string file  = reader.ReadString();
                         string state = reader.ReadString();
-                        if (file.EndsWith(".service", StringComparison.OrdinalIgnoreCase))
-                            list.Add((file, state));
+                    if (file.EndsWith(".service", StringComparison.OrdinalIgnoreCase)
+                        && !file.Contains("@."))
+                        list.Add((file, state));
                     }
                     return list;
                 }).ConfigureAwait(false);
