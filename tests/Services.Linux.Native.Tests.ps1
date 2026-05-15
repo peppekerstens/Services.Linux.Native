@@ -3,6 +3,9 @@ BeforeDiscovery {
     $script:IsRoot = if ($IsLinux) {
         (Get-Content /proc/self/status | Select-String '(?m)^Uid:\s+(\d+)').Matches.Groups[1].Value -eq '0'
     } else { $false }
+    $script:hasDBus = if ($IsLinux) {
+        [System.IO.File]::Exists('/run/dbus/system_bus_socket')
+    } else { $false }
 }
 
 BeforeAll {
@@ -65,7 +68,7 @@ Describe 'Module surface' -Skip:(-not $script:OnLinux) {
     }
 }
 
-Describe 'Output types' -Skip:(-not $script:OnLinux) {
+Describe 'Output types' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
     It 'Get-Service returns LinuxServiceInfo objects' {
         $svc = Get-Service -Name ssh* | Select-Object -First 1
         $svc | Should -Not -BeNullOrEmpty
@@ -74,7 +77,7 @@ Describe 'Output types' -Skip:(-not $script:OnLinux) {
     }
 }
 
-Describe 'Suspend-Service and Resume-Service are stubs' -Skip:(-not $script:OnLinux) {
+Describe 'Suspend-Service and Resume-Service are stubs' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
     It 'Suspend-Service writes a PlatformNotSupported error' {
         $err = $null
         Suspend-Service -Name sshd -ErrorVariable err -EA SilentlyContinue
@@ -88,7 +91,7 @@ Describe 'Suspend-Service and Resume-Service are stubs' -Skip:(-not $script:OnLi
     }
 }
 
-Describe 'Get-Service' -Skip:(-not $script:OnLinux) {
+Describe 'Get-Service' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
     It 'returns services without parameters' {
         $svcs = Get-Service
         $svcs | Should -Not -BeNullOrEmpty
@@ -108,7 +111,7 @@ Describe 'Get-Service' -Skip:(-not $script:OnLinux) {
 
 }
 
-Describe 'Start/Stop/Restart-Service -WhatIf' -Skip:(-not $script:OnLinux) {
+Describe 'Start/Stop/Restart-Service -WhatIf' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
     It 'Start-Service -WhatIf does not throw' {
         { Start-Service -Name sshd -WhatIf } | Should -Not -Throw
     }
