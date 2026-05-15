@@ -141,7 +141,7 @@ Describe 'New-Service and Remove-Service -WhatIf' -Skip:(-not ($script:OnLinux -
     }
 }
 
-Describe 'Elevation errors' -Skip:($script:OnLinux -and $script:IsRoot) {
+Describe 'Elevation errors' -Skip:($script:IsRoot -or -not $script:OnLinux) {
     It 'Start-Service writes a meaningful error when not root' {
         $err = @()
         Start-Service -Name 'sshd' -ErrorVariable err -ErrorAction SilentlyContinue
