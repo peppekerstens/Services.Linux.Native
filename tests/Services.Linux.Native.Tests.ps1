@@ -2,18 +2,20 @@ BeforeDiscovery {
     $script:OnLinux = $IsLinux
     $script:IsRoot = if ($IsLinux) {
         (Get-Content /proc/self/status | Select-String '(?m)^Uid:\s+(\d+)').Matches.Groups[1].Value -eq '0'
-    } else { $false }
+    }
+    else { $false }
     $script:hasDBus = if ($IsLinux) {
         [System.IO.File]::Exists('/run/dbus/system_bus_socket')
-    } else { $false }
+    }
+    else { $false }
 }
 
 BeforeAll {
     $script:ModuleDir = Join-Path $PSScriptRoot '..' 'src' 'Services.Linux.Native' 'bin' 'Release' 'net8.0'
     $script:ModulePath = Join-Path $script:ModuleDir 'Services.Linux.Native.dll'
-    $script:PublishDir  = Join-Path $script:ModuleDir 'publish'
+    $script:PublishDir = Join-Path $script:ModuleDir 'publish'
     if (Test-Path (Join-Path $script:PublishDir 'Services.Linux.Native.dll')) {
-        $script:ModuleDir  = $script:PublishDir
+        $script:ModuleDir = $script:PublishDir
         $script:ModulePath = Join-Path $script:PublishDir 'Services.Linux.Native.dll'
     }
     if (-not (Get-Module Services.Linux.Native -EA SilentlyContinue)) {
@@ -136,6 +138,62 @@ Describe 'New-Service and Remove-Service -WhatIf' -Skip:(-not ($script:OnLinux -
 
     It 'Remove-Service -WhatIf does not throw' {
         { Remove-Service -Name pester-test -WhatIf } | Should -Not -Throw
+    }
+}
+
+Describe 'Elevation errors' -Skip:($script:OnLinux -and $script:IsRoot) {
+    It 'Start-Service writes a meaningful error when not root' {
+        $err = @()
+        Start-Service -Name 'sshd' -ErrorVariable err -ErrorAction SilentlyContinue
+        $err.Count | Should -BeGreaterThan 0
+        $err[0].Exception.Message | Should -Be 'Start-Service requires root privileges.'
+        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.StartServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
+    }
+
+    It 'Stop-Service writes a meaningful error when not root' {
+        $err = @()
+        Stop-Service -Name 'sshd' -ErrorVariable err -ErrorAction SilentlyContinue
+        $err.Count | Should -BeGreaterThan 0
+        $err[0].Exception.Message | Should -Be 'Stop-Service requires root privileges.'
+        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.StopServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
+    }
+
+    It 'Restart-Service writes a meaningful error when not root' {
+        $err = @()
+        Restart-Service -Name 'sshd' -ErrorVariable err -ErrorAction SilentlyContinue
+        $err.Count | Should -BeGreaterThan 0
+        $err[0].Exception.Message | Should -Be 'Restart-Service requires root privileges.'
+        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.RestartServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
+    }
+
+    It 'Set-Service writes a meaningful error when not root' {
+        $err = @()
+        Set-Service -Name 'sshd' -StartupType Manual -ErrorVariable err -ErrorAction SilentlyContinue
+        $err.Count | Should -BeGreaterThan 0
+        $err[0].Exception.Message | Should -Be 'Set-Service requires root privileges.'
+        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.SetServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
+    }
+
+    It 'New-Service writes a meaningful error when not root' {
+        $err = @()
+        New-Service -Name 'pester-test-elev' -BinaryPathName '/usr/bin/true' -ErrorVariable err -ErrorAction SilentlyContinue
+        $err.Count | Should -BeGreaterThan 0
+        $err[0].Exception.Message | Should -Be 'New-Service requires root privileges.'
+        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.NewServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
+    }
+
+    It 'Remove-Service writes a meaningful error when not root' {
+        $err = @()
+        Remove-Service -Name 'pester-test-elev' -ErrorVariable err -ErrorAction SilentlyContinue
+        $err.Count | Should -BeGreaterThan 0
+        $err[0].Exception.Message | Should -Be 'Remove-Service requires root privileges.'
+        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.RemoveServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
     }
 }
 
