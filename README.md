@@ -82,9 +82,52 @@ Remove-Service -Name myapp -WhatIf
 
 ---
 
-## CI / Testing
+## Manual Testing
 
-Tested across 5 Linux distributions in containers on every push:
+For a detailed, step-by-step guide on setting up your environment and testing these modules, see the blog post: [Testing the native layer](https://peppekerstens.github.io/blog/testing-the-native-layer).
+
+### Option 1: Interactive Container (Recommended)
+Use the pre-built CI images to avoid dependency issues.
+
+```powershell
+# Start an interactive shell in the Ubuntu 24.04 test container
+docker compose -f docker-compose.test.yml run ubuntu-24 pwsh
+```
+Once inside:
+```powershell
+Import-Module /module/bin/Release/net8.0/publish/Services.Linux.Native.dll
+Get-Service
+```
+
+### Option 2: Bare WSL
+Test directly in your WSL distro (requires `.NET 8 SDK`).
+
+```powershell
+dotnet publish src/Services.Linux.Native --configuration Release --output bin/Release/net8.0/publish
+pwsh
+Import-Module ./bin/Release/net8.0/publish/Services.Linux.Native.dll
+Get-Service
+```
+
+Once inside:
+```powershell
+Import-Module /module/bin/Release/net8.0/publish/Services.Linux.Native.dll
+Get-Service
+```
+
+### Option 2: Bare WSL
+Test directly in your WSL distro (requires `.NET 8 SDK`).
+
+```powershell
+# Build and publish to ensure all NuGet dependencies are copied
+dotnet publish src/Services.Linux.Native --configuration Release --output bin/Release/net8.0/publish
+
+# Load the DLL
+pwsh
+Import-Module ./bin/Release/net8.0/publish/Services.Linux.Native.dll
+Get-Service
+```
+
 
 | Distro | Image |
 |---|---|
