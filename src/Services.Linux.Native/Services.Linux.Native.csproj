@@ -10,6 +10,14 @@
     <GenerateRuntimeConfigOnBuild>true</GenerateRuntimeConfigOnBuild>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <PackageId>Services.Linux.Native</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>peppekerstens</Authors>
+    <Description>Linux Services module providing Windows-compatible service management cmdlets via systemd D-Bus API.</Description>
+    <PackageTags>PowerShell;Linux;pwsh;Module;Services</PackageTags>
+    <PackageProjectUrl>https://github.com/peppekerstens/Services.Linux.Native</PackageProjectUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/peppekerstens/Services.Linux.Native</RepositoryUrl>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="System.Management.Automation" Version="7.4.6" />

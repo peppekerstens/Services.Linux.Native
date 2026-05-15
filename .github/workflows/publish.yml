@@ -1,0 +1,15 @@
+name: publish
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+  release:
+    types: [published]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: dotnet pack -c Release -o out
+      - run: dotnet nuget push out/*.nupkg --source https://nuget.pkg.github.com/peppekerstens/index.json --api-key ${{ secrets.GITHUB_TOKEN }} --skip-duplicate
