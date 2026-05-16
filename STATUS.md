@@ -9,7 +9,7 @@
 
 ## Current State
 
-7 cmdlets + 2 stubs implemented via D-Bus (`Tmds.DBus.Protocol`). Start/Stop/Restart translate polkit errors. Set/New/Remove do not (issue #29).
+7 cmdlets + 2 stubs implemented via D-Bus (`Tmds.DBus.Protocol`). All write cmdlets translate polkit errors to `"root privileges are required."`.
 
 ### Output Types
 
@@ -34,15 +34,14 @@
 
 | Issue | Severity | Status |
 |---|---|---|
-| #29 — `Set/New/Remove-Service` leak raw D-Bus `InteractiveAuthorizationRequired` errors | MUST | ⬜ Open |
+| #29 — `Set/New/Remove-Service` leak raw D-Bus `InteractiveAuthorizationRequired` errors | MUST | ✅ Resolved (`1ba16a8`) |
 
 ## Next Steps
 
-1. Fix issue #29 — add polkit error translation to `EnableUnits`/`DisableUnits` and `DaemonReload`
-2. Build `LinuxServiceController : Component` (replaces `LinuxServiceInfo`)
-3. Update all cmdlets to use new type
-4. Add Pester tests for new properties and methods
-5. Trigger GHA pester workflow — verify all green
+1. Build `LinuxServiceController : Component` (replaces `LinuxServiceInfo`)
+2. Update all cmdlets to use new type
+3. Add Pester tests for new properties and methods
+4. Trigger GHA pester workflow — verify all green
 
 ---
 

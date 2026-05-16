@@ -169,7 +169,7 @@ Full analysis: [LinuxServiceInfo vs ServiceController — Compatibility Analysis
 
 ### Elevation error translation (issue #29)
 
-`Start/Stop/Restart-Service` translate D-Bus polkit errors to `"root privileges are required. Use 'sudo pwsh'."`. `Set/New/Remove-Service` do not — they leak raw `InteractiveAuthorizationRequired` errors. Fix pending.
+All write cmdlets (`Start/Stop/Restart/Set/New/Remove-Service`) translate D-Bus polkit errors to `"root privileges are required. Use 'sudo pwsh'."`. Fixed in `1ba16a8`.
 
 ---
 
