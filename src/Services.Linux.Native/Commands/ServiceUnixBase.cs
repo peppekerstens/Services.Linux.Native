@@ -55,7 +55,7 @@ namespace Microsoft.PowerShell.Commands
                 string cmdletName = $"{operation}-Service";
                 WriteError(new ErrorRecord(
                     new PSSecurityException(ErrorMessages.Format(ErrorMessages.ElevationRequired, cmdletName)),
-                    "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
+                    "UnauthorizedAccess", ErrorCategory.SecurityError, unitName));
                 return;
             }
             WriteError(new ErrorRecord(

@@ -232,8 +232,8 @@ Describe 'Elevation errors' -Skip:($script:IsRoot -or -not $script:OnLinux) {
         Start-Service -Name 'sshd' -ErrorVariable err -ErrorAction SilentlyContinue
         $err.Count | Should -BeGreaterThan 0
         $err[0].Exception.Message | Should -Be 'Start-Service requires root privileges.'
-        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.StartServiceCommand'
-        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
+        $err[0].FullyQualifiedErrorId | Should -Be 'UnauthorizedAccess,Microsoft.PowerShell.Commands.StartServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'SecurityError'
     }
 
     It 'Stop-Service writes a meaningful error when not root' {
@@ -241,8 +241,8 @@ Describe 'Elevation errors' -Skip:($script:IsRoot -or -not $script:OnLinux) {
         Stop-Service -Name 'sshd' -ErrorVariable err -ErrorAction SilentlyContinue
         $err.Count | Should -BeGreaterThan 0
         $err[0].Exception.Message | Should -Be 'Stop-Service requires root privileges.'
-        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.StopServiceCommand'
-        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
+        $err[0].FullyQualifiedErrorId | Should -Be 'UnauthorizedAccess,Microsoft.PowerShell.Commands.StopServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'SecurityError'
     }
 
     It 'Restart-Service writes a meaningful error when not root' {
@@ -250,8 +250,8 @@ Describe 'Elevation errors' -Skip:($script:IsRoot -or -not $script:OnLinux) {
         Restart-Service -Name 'sshd' -ErrorVariable err -ErrorAction SilentlyContinue
         $err.Count | Should -BeGreaterThan 0
         $err[0].Exception.Message | Should -Be 'Restart-Service requires root privileges.'
-        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.RestartServiceCommand'
-        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
+        $err[0].FullyQualifiedErrorId | Should -Be 'UnauthorizedAccess,Microsoft.PowerShell.Commands.RestartServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'SecurityError'
     }
 
     It 'Set-Service writes a meaningful error when not root' {
@@ -259,8 +259,8 @@ Describe 'Elevation errors' -Skip:($script:IsRoot -or -not $script:OnLinux) {
         Set-Service -Name 'sshd' -StartupType Manual -ErrorVariable err -ErrorAction SilentlyContinue
         $err.Count | Should -BeGreaterThan 0
         $err[0].Exception.Message | Should -Be 'Set-Service requires root privileges.'
-        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.SetServiceCommand'
-        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
+        $err[0].FullyQualifiedErrorId | Should -Be 'UnauthorizedAccess,Microsoft.PowerShell.Commands.SetServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'SecurityError'
     }
 
     It 'New-Service writes a meaningful error when not root' {
@@ -268,8 +268,8 @@ Describe 'Elevation errors' -Skip:($script:IsRoot -or -not $script:OnLinux) {
         New-Service -Name 'pester-test-elev' -BinaryPathName '/usr/bin/true' -ErrorVariable err -ErrorAction SilentlyContinue
         $err.Count | Should -BeGreaterThan 0
         $err[0].Exception.Message | Should -Be 'New-Service requires root privileges.'
-        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.NewServiceCommand'
-        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
+        $err[0].FullyQualifiedErrorId | Should -Be 'UnauthorizedAccess,Microsoft.PowerShell.Commands.NewServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'SecurityError'
     }
 
     It 'Remove-Service writes a meaningful error when not root' {
@@ -277,8 +277,8 @@ Describe 'Elevation errors' -Skip:($script:IsRoot -or -not $script:OnLinux) {
         Remove-Service -Name 'pester-test-elev' -ErrorVariable err -ErrorAction SilentlyContinue
         $err.Count | Should -BeGreaterThan 0
         $err[0].Exception.Message | Should -Be 'Remove-Service requires root privileges.'
-        $err[0].FullyQualifiedErrorId | Should -Be 'ElevationRequired,Microsoft.PowerShell.Commands.RemoveServiceCommand'
-        $err[0].CategoryInfo.Category | Should -Be 'PermissionDenied'
+        $err[0].FullyQualifiedErrorId | Should -Be 'UnauthorizedAccess,Microsoft.PowerShell.Commands.RemoveServiceCommand'
+        $err[0].CategoryInfo.Category | Should -Be 'SecurityError'
     }
 }
 

@@ -59,7 +59,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 WriteError(new ErrorRecord(
                     new PSSecurityException(ErrorMessages.Format(ErrorMessages.ElevationRequired, MyInvocation.MyCommand.Name)),
-                    "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
+                                            "UnauthorizedAccess", ErrorCategory.SecurityError, unitName));
                 return;
             }
             catch (Exception ex)
