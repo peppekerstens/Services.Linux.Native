@@ -7,7 +7,7 @@ namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsLifecycle.Start, "Service", DefaultParameterSetName = "Name",
         SupportsShouldProcess = true,
-        HelpUri = "https://github.com/peppekerstens/Services.Linux.Native",
+        HelpUri = "https://learn.microsoft.com/powershell/module/microsoft.powershell.management/start-service",
         RemotingCapability = RemotingCapability.SupportedByCommand)]
     [OutputType(typeof(LinuxServiceController))]
     public sealed class StartServiceCommand : ServiceUnixBase

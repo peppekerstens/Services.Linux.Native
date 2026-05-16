@@ -7,7 +7,7 @@ namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsLifecycle.Restart, "Service", DefaultParameterSetName = "Name",
         SupportsShouldProcess = true,
-        HelpUri = "https://github.com/peppekerstens/Services.Linux.Native",
+        HelpUri = "https://learn.microsoft.com/powershell/module/microsoft.powershell.management/restart-service",
         RemotingCapability = RemotingCapability.SupportedByCommand)]
     [OutputType(typeof(LinuxServiceController))]
     public sealed class RestartServiceCommand : ServiceUnixBase

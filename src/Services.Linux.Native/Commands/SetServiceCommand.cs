@@ -9,7 +9,7 @@ namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsCommon.Set, "Service", DefaultParameterSetName = "Name",
         SupportsShouldProcess = true,
-        HelpUri = "https://github.com/peppekerstens/Services.Linux.Native",
+        HelpUri = "https://learn.microsoft.com/powershell/module/microsoft.powershell.management/set-service",
         RemotingCapability = RemotingCapability.SupportedByCommand)]
     [OutputType(typeof(LinuxServiceController))]
     public sealed class SetServiceCommand : PSCmdlet

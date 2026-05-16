@@ -6,7 +6,7 @@ using System.Management.Automation;
 namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsLifecycle.Resume, "Service", DefaultParameterSetName = "Name",
-        HelpUri = "https://github.com/peppekerstens/Services.Linux.Native",
+        HelpUri = "https://learn.microsoft.com/powershell/module/microsoft.powershell.management/resume-service",
         RemotingCapability = RemotingCapability.SupportedByCommand)]
     [OutputType(typeof(LinuxServiceController))]
     public sealed class ResumeServiceCommand : ServiceUnixBase

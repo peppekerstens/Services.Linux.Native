@@ -7,7 +7,7 @@ using Tmds.DBus.Protocol;
 namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsCommon.Get, "Service", DefaultParameterSetName = "Default",
-        HelpUri = "https://github.com/peppekerstens/Services.Linux.Native",
+        HelpUri = "https://learn.microsoft.com/powershell/module/microsoft.powershell.management/get-service",
         RemotingCapability = RemotingCapability.SupportedByCommand)]
     [OutputType(typeof(LinuxServiceController))]
     public sealed class GetServiceCommand : PSCmdlet

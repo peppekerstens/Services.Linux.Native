@@ -10,7 +10,7 @@ namespace Microsoft.PowerShell.Commands
     [Cmdlet(VerbsCommon.Remove, "Service",
         SupportsShouldProcess = true,
         ConfirmImpact = ConfirmImpact.High,
-        HelpUri = "https://github.com/peppekerstens/Services.Linux.Native",
+        HelpUri = "https://learn.microsoft.com/powershell/module/microsoft.powershell.management/remove-service",
         RemotingCapability = RemotingCapability.SupportedByCommand)]
     public sealed class RemoveServiceCommand : PSCmdlet
     {
