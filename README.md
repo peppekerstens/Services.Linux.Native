@@ -146,10 +146,30 @@ Invoke-Pester -Path tests/Services.Linux.Native.Tests.ps1 -Output Detailed
 
 - **D-Bus, not `systemctl`**: Read operations use `ListUnits` + `ListUnitFiles` D-Bus methods on the systemd Manager interface — no subprocess overhead. Write operations use `StartUnit`, `StopUnit`, `EnableUnitFiles`, `DisableUnitFiles`.
 - **`dotnet publish` for dependency resolution**: `Tmds.DBus.Protocol` is a NuGet dependency. `dotnet build` does not copy it to the output directory for library projects on WSL. `dotnet publish --output` is required to produce a self-contained module directory. Test `BeforeAll` probes both build and publish paths.
-- **`string Status` avoids CA1416**: `ServiceControllerStatus` is annotated `[SupportedOSPlatform("windows")]` in .NET 8. Using `string` with constants `"Running"`, `"Stopped"` avoids platform-check build errors inside `TreatWarningsAsErrors=true` builds.
+- **`string Status` avoids CA1416**: `ServiceControllerStatus` is annotated `[SupportedOSPlatform("windows")]` in .NET 8. Using `string` with constants `"Running"`, `"Stopped"` avoids platform-check build errors inside `TreatWarningsAsErrors=true` builds. The PowerShell fork uses `ServiceControllerStatus` with `#if UNIX` guards instead.
 - **Shared D-Bus connection per invocation**: Compound cmdlets (`Set-Service`, `New-Service`, `Remove-Service`) open one D-Bus connection and pass it to all D-Bus operations. `Get-Service` and single-operation cmdlets use their own connection.
 - **SynchronizationContext safety**: PowerShell's default runspace has no `SynchronizationContext`, so blocking on async (`.GetAwaiter().GetResult()`) is safe. Every blocking call is annotated with a comment documenting this assumption.
 - **User-unit support**: `New-Service` and `Remove-Service` detect non-root callers via `id -u` and route to `~/.config/systemd/user/` instead of `/etc/systemd/system/`.
+
+---
+
+## Known limitations
+
+### `LinuxServiceInfo` vs `ServiceController` compatibility
+
+`Get-Service` on Linux returns `LinuxServiceInfo` (extends `object`). On Windows it returns `System.ServiceProcess.ServiceController` (extends `Component`). These types are **not compatible**:
+
+- **No inheritance** — `$svc -is [ServiceController]` returns `$false` on Linux
+- **No instance methods** — `$svc.Start()`, `$svc.Stop()`, `$svc.Refresh()`, `$svc.Dispose()` all fail
+- **Missing properties** — `ServiceName` (use `Name`), `Description`, `BinaryPathName`, `DependentServices`, `CanStop`, `MachineName`
+- **`Status` is `string`** — not `ServiceControllerStatus` enum (fork fixes this)
+- **No ETS properties** — `StartupType` (use `StartType`), `UserName`, `DelayedAutoStart`
+
+Full analysis: [LinuxServiceInfo vs ServiceController — Compatibility Analysis](docs/linuxserviceinfo-vs-servicecontroller-20260516.md)
+
+### Elevation error translation (issue #29)
+
+`Start/Stop/Restart-Service` translate D-Bus polkit errors to `"root privileges are required. Use 'sudo pwsh'."`. `Set/New/Remove-Service` do not — they leak raw `InteractiveAuthorizationRequired` errors. Fix pending.
 
 ---
 
@@ -159,6 +179,8 @@ Invoke-Pester -Path tests/Services.Linux.Native.Tests.ps1 -Output Detailed
 |---|---|
 | 0.1.0 | Initial release. 7 full cmdlets, 2 stubs. D-Bus via `Tmds.DBus.Protocol` 0.93.0. 20 Pester tests. `dotnet publish` required for dependency resolution. |
 | 0.1.1 | Code review fixes: `ConfigureAwait(false)` on all async calls; shared D-Bus connection for compound cmdlets; `IsNonRoot()` + `GetUserUnitDir()` for non-root unit file paths; removed dead `LU_*` constants. |
+| 0.1.2 | Copyright headers added; `SupportsShouldProcess` removed from stubs; template units (`@.`) excluded from `Get-Service`; D-Bus polkit errors translated to `"root privileges are required."` for Start/Stop/Restart; elevation error tests added; Windows pester skip added. |
+| 0.2.0 (pending) | Issue #29: `EnableUnits`/`DisableUnits` and `DaemonReload` polkit error translation. `Status` type change from `string` to `ServiceControllerStatus` (pending decision). |
 
 ---
 
