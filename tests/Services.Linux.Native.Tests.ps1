@@ -71,11 +71,72 @@ Describe 'Module surface' -Skip:(-not $script:OnLinux) {
 }
 
 Describe 'Output types' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
-    It 'Get-Service returns LinuxServiceInfo objects' {
+    It 'Get-Service returns LinuxServiceController objects' {
         $svc = Get-Service -Name ssh* | Select-Object -First 1
         $svc | Should -Not -BeNullOrEmpty
-        $svc.Name | Should -BeOfType [string]
-        $svc.Status | Should -BeOfType [string]
+        $svc.PSObject.TypeNames[0] | Should -Be 'Microsoft.PowerShell.Commands.LinuxServiceController'
+    }
+
+    It 'LinuxServiceController inherits from Component' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+        $svc -is [System.ComponentModel.Component] | Should -BeTrue
+    }
+
+    It 'ServiceName is a string ending with .service' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+        $svc.ServiceName | Should -BeOfType [string]
+        $svc.ServiceName | Should -Match '\.service$'
+    }
+
+    It 'Name is ServiceName without the .service suffix' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+        $svc.Name | Should -BeExactly $svc.ServiceName.Replace('.service', '')
+    }
+
+    It 'Status is ServiceControllerStatus enum' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+        $svc.Status | Should -BeOfType [Microsoft.PowerShell.Commands.ServiceControllerStatus]
+    }
+
+    It 'UnitType is LinuxServiceType enum' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+        $svc.UnitType | Should -BeOfType [Microsoft.PowerShell.Commands.LinuxServiceType]
+    }
+
+    It 'UnitType has a valid Linux-native value' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+        $validTypes = @('Simple', 'Forking', 'Oneshot', 'DBus', 'Notify', 'Idle', 'Exec', 'Unknown')
+        $svc.UnitType.ToString() | Should -BeIn $validTypes
+    }
+
+    It 'StartType is ServiceStartupType enum' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+        $svc.StartType | Should -BeOfType [Microsoft.PowerShell.Commands.ServiceStartupType]
+    }
+
+    It 'DisplayName is a string' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+        $svc.DisplayName | Should -BeOfType [string]
+    }
+
+    It 'MachineName returns localhost' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+        $svc.MachineName | Should -BeExactly '.'
+    }
+
+    It 'ToString returns ServiceName' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+        $svc.ToString() | Should -BeExactly $svc.ServiceName
     }
 }
 
@@ -102,12 +163,36 @@ Describe 'Get-Service' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
     It 'filters by name with wildcard' {
         $svcs = Get-Service -Name s*
         $svcs | Should -Not -BeNullOrEmpty
-        foreach ($s in $svcs) { $s.Name -match '^s' | Should -BeTrue }
+        foreach ($s in $svcs) { $s.ServiceName -match '^s' | Should -BeTrue }
     }
 
     It 'filters by exact name' {
         $svc = Get-Service -Name sshd
         $svc | Should -Not -BeNullOrEmpty
+    }
+
+    It 'supports where Name -like filtering (short name without .service)' {
+        $svcs = Get-Service | Where-Object Name -Like 'cron*'
+        $svcs | Should -Not -BeNullOrEmpty
+        foreach ($s in $svcs) {
+            $s.Name | Should -Not -Match '\.service$'
+        }
+    }
+
+    It 'supports where ServiceName -like filtering (full unit name)' {
+        $svcs = Get-Service | Where-Object ServiceName -Like 'cron*.service'
+        $svcs | Should -Not -BeNullOrEmpty
+        foreach ($s in $svcs) {
+            $s.ServiceName | Should -Match '\.service$'
+        }
+    }
+
+    It 'supports where Status -eq filtering' {
+        $svcs = Get-Service | Where-Object Status -EQ Running
+        $svcs | Should -Not -BeNullOrEmpty
+        foreach ($s in $svcs) {
+            $s.Status | Should -BeExactly ([Microsoft.PowerShell.Commands.ServiceControllerStatus]::Running)
+        }
     }
 
 

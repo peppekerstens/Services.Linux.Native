@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+// Copyright (c) peppekerstens.
 // Licensed under the MIT License.
 
 using System.Management.Automation;
@@ -7,7 +7,7 @@ using Tmds.DBus.Protocol;
 namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsCommon.Get, "Service", DefaultParameterSetName = "Default")]
-    [OutputType(typeof(LinuxServiceInfo))]
+    [OutputType(typeof(LinuxServiceController))]
     public sealed class GetServiceCommand : PSCmdlet
     {
         [Parameter(Position = 0, ParameterSetName = "Default",
@@ -17,14 +17,14 @@ namespace Microsoft.PowerShell.Commands
         public string[]? Name { get; set; }
 
         [Parameter(ParameterSetName = "InputObject", ValueFromPipeline = true)]
-        public LinuxServiceInfo[]? InputObject { get; set; }
+        public LinuxServiceController[]? InputObject { get; set; }
 
         private readonly List<string> _names = new();
 
         protected override void ProcessRecord()
         {
             if (InputObject is not null)
-                foreach (var s in InputObject) _names.Add(s.Name);
+                foreach (var s in InputObject) _names.Add(s.ServiceName);
             else if (Name is not null)
                 _names.AddRange(Name);
         }

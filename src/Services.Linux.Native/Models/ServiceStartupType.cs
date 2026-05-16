@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+// Copyright (c) peppekerstens.
 // Licensed under the MIT License.
 
 namespace Microsoft.PowerShell.Commands

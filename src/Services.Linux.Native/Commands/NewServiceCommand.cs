@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+// Copyright (c) peppekerstens.
 // Licensed under the MIT License.
 
 using System.Management.Automation;
@@ -8,7 +8,7 @@ using Tmds.DBus.Protocol;
 namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsCommon.New, "Service", SupportsShouldProcess = true)]
-    [OutputType(typeof(LinuxServiceInfo))]
+    [OutputType(typeof(LinuxServiceController))]
     public sealed class NewServiceCommand : PSCmdlet
     {
         [Parameter(Mandatory = true, Position = 0)]
@@ -84,15 +84,13 @@ namespace Microsoft.PowerShell.Commands
                 }
             }
 
-            WriteObject(new LinuxServiceInfo
-            {
-                Name        = unitName,
-                DisplayName = string.IsNullOrEmpty(Description) ? Name : Description,
-                Status      = "Stopped",
-                StartType   = StartupType,
-                ActiveState = "inactive",
-                SubState    = "dead",
-            });
+            WriteObject(new LinuxServiceController(
+                serviceName: unitName,
+                displayName: string.IsNullOrEmpty(Description) ? Name : Description,
+                status: "Stopped",
+                startType: StartupType,
+                activeState: "inactive",
+                subState: "dead"));
         }
     }
 }

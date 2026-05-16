@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+// Copyright (c) peppekerstens.
 // Licensed under the MIT License.
 
 using System.Management.Automation;
@@ -6,7 +6,7 @@ using System.Management.Automation;
 namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsLifecycle.Suspend, "Service", DefaultParameterSetName = "Name")]
-    [OutputType(typeof(LinuxServiceInfo))]
+    [OutputType(typeof(LinuxServiceController))]
     public sealed class SuspendServiceCommand : ServiceUnixBase
     {
         protected override void OperateOnService(string unitName)

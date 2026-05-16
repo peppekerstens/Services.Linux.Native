@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+// Copyright (c) peppekerstens.
 // Licensed under the MIT License.
 
 using System.Management.Automation;
@@ -9,7 +9,7 @@ namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsCommon.Set, "Service", DefaultParameterSetName = "Name",
         SupportsShouldProcess = true)]
-    [OutputType(typeof(LinuxServiceInfo))]
+    [OutputType(typeof(LinuxServiceController))]
     public sealed class SetServiceCommand : PSCmdlet
     {
         [Parameter(Mandatory = true, Position = 0, ParameterSetName = "Name",
@@ -19,7 +19,7 @@ namespace Microsoft.PowerShell.Commands
 
         [Parameter(Mandatory = true, ParameterSetName = "InputObject",
             ValueFromPipeline = true)]
-        public LinuxServiceInfo? InputObject { get; set; }
+        public LinuxServiceController? InputObject { get; set; }
 
         [Parameter]
         public ServiceStartupType StartupType { get; set; } = ServiceStartupType.InvalidValue;
@@ -33,7 +33,7 @@ namespace Microsoft.PowerShell.Commands
 
         protected override void ProcessRecord()
         {
-            string rawName  = ParameterSetName == "InputObject" ? InputObject!.Name : Name!;
+            string rawName  = ParameterSetName == "InputObject" ? InputObject!.ServiceName : Name!;
             string unitName = SystemdHelper.ResolveUnitName(rawName);
 
             if (!ShouldProcess(unitName, "Set")) return;
@@ -48,13 +48,6 @@ namespace Microsoft.PowerShell.Commands
                         SystemdHelper.DisableUnits(conn, new[] { unitName });
                     else
                         SystemdHelper.EnableUnits(conn, new[] { unitName });
-                }
-                catch (InvalidOperationException ex) when (ex.Message.Contains("root privileges"))
-                {
-                    WriteError(new ErrorRecord(
-                        new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
-                        "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
-                    return;
                 }
                 catch (InvalidOperationException ex) when (ex.Message.Contains("root privileges"))
                 {

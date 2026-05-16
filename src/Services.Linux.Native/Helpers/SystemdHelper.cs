@@ -1,9 +1,10 @@
-// Copyright (c) Microsoft Corporation.
+// Copyright (c) peppekerstens.
 // Licensed under the MIT License.
 
 using System.Diagnostics;
 using System.IO;
 using System.Management.Automation;
+using System.ServiceProcess;
 
 using Tmds.DBus.Protocol;
 
@@ -31,13 +32,13 @@ namespace Microsoft.PowerShell.Commands
         internal static string ResolveUnitName(string name)
             => name.Contains('.') ? name : name + ".service";
 
-        internal static IEnumerable<LinuxServiceInfo> GetServices(string[]? namePatterns)
+        internal static IEnumerable<LinuxServiceController> GetServices(string[]? namePatterns)
             => GetServicesAsync(namePatterns).GetAwaiter().GetResult();
 
-        private static async Task<List<LinuxServiceInfo>> GetServicesAsync(string[]? namePatterns)
+        private static async Task<List<LinuxServiceController>> GetServicesAsync(string[]? namePatterns)
         {
             using var conn = OpenSystem();
-            var activeUnits = new Dictionary<string, LinuxServiceInfo>(StringComparer.OrdinalIgnoreCase);
+            var activeUnits = new Dictionary<string, LinuxServiceController>(StringComparer.OrdinalIgnoreCase);
 
             var msg1 = BuildCall(conn, "ListUnits");
             {
@@ -67,15 +68,13 @@ namespace Microsoft.PowerShell.Commands
 
                 foreach (var (name, desc, active, sub) in reply)
                 {
-                    activeUnits[name] = new LinuxServiceInfo
-                    {
-                        Name        = name,
-                        DisplayName = desc,
-                        ActiveState = active,
-                        SubState    = sub,
-                        Status      = LinuxServiceInfo.MapStatus(active, sub),
-                        StartType   = ServiceStartupType.Manual,
-                    };
+                    activeUnits[name] = new LinuxServiceController(
+                        serviceName: name,
+                        displayName: desc,
+                        status: LinuxServiceController.MapStatus(active, sub),
+                        startType: ServiceStartupType.Manual,
+                        activeState: active,
+                        subState: sub);
                 }
             }
 
@@ -101,27 +100,31 @@ namespace Microsoft.PowerShell.Commands
                 foreach (var (file, state) in reply)
                 {
                     string unitName = System.IO.Path.GetFileName(file);
-                    var startType = LinuxServiceInfo.MapStartupType(state);
+                    var startType = LinuxServiceController.MapStartupType(state);
                     if (activeUnits.TryGetValue(unitName, out var existing))
                     {
-                        existing.StartType = startType;
+                        activeUnits[unitName] = new LinuxServiceController(
+                            serviceName: existing.ServiceName,
+                            displayName: existing.DisplayName,
+                            status: existing.Status,
+                            startType: startType,
+                            activeState: existing.ActiveState,
+                            subState: existing.SubState);
                     }
                     else
                     {
-                        activeUnits[unitName] = new LinuxServiceInfo
-                        {
-                            Name        = unitName,
-                            DisplayName = unitName,
-                            ActiveState = "inactive",
-                            SubState    = "dead",
-                            Status      = "Stopped",
-                            StartType   = startType,
-                        };
+                        activeUnits[unitName] = new LinuxServiceController(
+                            serviceName: unitName,
+                            displayName: unitName,
+                            status: ServiceControllerStatus.Stopped,
+                            startType: startType,
+                            activeState: "inactive",
+                            subState: "dead");
                     }
                 }
             }
 
-            var result = new List<LinuxServiceInfo>();
+            var result = new List<LinuxServiceController>();
             foreach (var svc in activeUnits.Values)
             {
                 if (MatchesPatterns(svc, namePatterns))
@@ -130,7 +133,7 @@ namespace Microsoft.PowerShell.Commands
             return result;
         }
 
-        private static bool MatchesPatterns(LinuxServiceInfo svc, string[]? patterns)
+        private static bool MatchesPatterns(LinuxServiceController svc, string[]? patterns)
         {
             if (patterns is null || patterns.Length == 0) return true;
             foreach (var pattern in patterns)
@@ -138,15 +141,15 @@ namespace Microsoft.PowerShell.Commands
                 if (WildcardPattern.ContainsWildcardCharacters(pattern))
                 {
                     var wp = new WildcardPattern(pattern, WildcardOptions.IgnoreCase);
-                    if (wp.IsMatch(svc.Name))
+                    if (wp.IsMatch(svc.ServiceName))
                         return true;
                 }
                 else
                 {
                     string bare = pattern.EndsWith(".service", StringComparison.OrdinalIgnoreCase)
                         ? pattern : pattern + ".service";
-                    if (svc.Name.Equals(pattern, StringComparison.OrdinalIgnoreCase)
-                        || svc.Name.Equals(bare,    StringComparison.OrdinalIgnoreCase))
+                    if (svc.ServiceName.Equals(pattern, StringComparison.OrdinalIgnoreCase)
+                        || svc.ServiceName.Equals(bare,    StringComparison.OrdinalIgnoreCase))
                         return true;
                 }
             }

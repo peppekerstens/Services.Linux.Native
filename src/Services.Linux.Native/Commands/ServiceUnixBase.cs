@@ -1,4 +1,4 @@
-// Copyright (c) Microsoft Corporation.
+// Copyright (c) peppekerstens.
 // Licensed under the MIT License.
 
 using System.Management.Automation;
@@ -14,7 +14,7 @@ namespace Microsoft.PowerShell.Commands
 
         [Parameter(Mandatory = true, ParameterSetName = "InputObject",
             ValueFromPipeline = true)]
-        public LinuxServiceInfo[]? InputObject { get; set; }
+        public LinuxServiceController[]? InputObject { get; set; }
 
         [Parameter]
         public SwitchParameter PassThru { get; set; }
@@ -23,7 +23,7 @@ namespace Microsoft.PowerShell.Commands
         {
             IEnumerable<string> unitNames;
             if (ParameterSetName == "InputObject" && InputObject is not null)
-                unitNames = System.Array.ConvertAll(InputObject, s => s.Name);
+                unitNames = System.Array.ConvertAll(InputObject, s => s.ServiceName);
             else if (Name is not null)
                 unitNames = System.Array.ConvertAll(Name, SystemdHelper.ResolveUnitName);
             else
