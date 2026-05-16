@@ -329,6 +329,8 @@ namespace Microsoft.PowerShell.Commands
                 proc.WaitForExit();
                 return !output.Trim().Equals("0");
             }
+            // If `id -u` fails (no subprocess, missing binary), assume non-root
+            // as the safer default — user-context unit dir will be used.
             catch { return true; }
         }
 

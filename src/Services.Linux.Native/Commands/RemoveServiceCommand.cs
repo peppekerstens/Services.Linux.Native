@@ -31,10 +31,18 @@ namespace Microsoft.PowerShell.Commands
             using DBusConnection conn = SystemdHelper.OpenSystem();
 
             try { SystemdHelper.StopUnit(conn, unitName); }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+                // Best-effort stop before deletion — non-terminating.
+                WriteWarning($"Could not stop {unitName} before removal: {ex.Message}");
+            }
 
             try { SystemdHelper.DisableUnits(conn, new[] { unitName }); }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+                // Best-effort disable before deletion — non-terminating.
+                WriteWarning($"Could not disable {unitName} before removal: {ex.Message}");
+            }
 
             try { SystemdHelper.RemoveUnitFile(unitName); }
             catch (Exception ex)
