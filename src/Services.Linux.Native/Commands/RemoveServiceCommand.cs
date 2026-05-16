@@ -18,6 +18,12 @@ namespace Microsoft.PowerShell.Commands
 
         protected override void ProcessRecord()
         {
+            if (OperatingSystem.IsWindows())
+            {
+                InvokeCommand.InvokeScript("Microsoft.PowerShell.Management\\Remove-Service");
+                return;
+            }
+
             string unitName = SystemdHelper.ResolveUnitName(Name);
 
             if (!ShouldProcess(unitName, "Stop, disable, and delete systemd service unit")) return;

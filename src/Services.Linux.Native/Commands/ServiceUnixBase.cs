@@ -21,6 +21,13 @@ namespace Microsoft.PowerShell.Commands
 
         protected override void ProcessRecord()
         {
+            if (OperatingSystem.IsWindows())
+            {
+                string cmdletName = MyInvocation.MyCommand.Name;
+                InvokeCommand.InvokeScript($"Microsoft.PowerShell.Management\\{cmdletName}");
+                return;
+            }
+
             IEnumerable<string> unitNames;
             if (ParameterSetName == "InputObject" && InputObject is not null)
                 unitNames = System.Array.ConvertAll(InputObject, s => s.ServiceName);

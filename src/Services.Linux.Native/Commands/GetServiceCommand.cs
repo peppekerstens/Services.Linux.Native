@@ -23,6 +23,12 @@ namespace Microsoft.PowerShell.Commands
 
         protected override void ProcessRecord()
         {
+            if (OperatingSystem.IsWindows())
+            {
+                InvokeCommand.InvokeScript("Microsoft.PowerShell.Management\\Get-Service");
+                return;
+            }
+
             if (InputObject is not null)
                 foreach (var s in InputObject) _names.Add(s.ServiceName);
             else if (Name is not null)

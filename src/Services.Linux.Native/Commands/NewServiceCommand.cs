@@ -26,6 +26,12 @@ namespace Microsoft.PowerShell.Commands
 
         protected override void ProcessRecord()
         {
+            if (OperatingSystem.IsWindows())
+            {
+                InvokeCommand.InvokeScript("Microsoft.PowerShell.Management\\New-Service");
+                return;
+            }
+
             string unitName = SystemdHelper.ResolveUnitName(Name);
 
             if (!ShouldProcess(unitName, "Create systemd service unit")) return;

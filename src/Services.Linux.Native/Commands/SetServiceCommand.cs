@@ -33,6 +33,12 @@ namespace Microsoft.PowerShell.Commands
 
         protected override void ProcessRecord()
         {
+            if (OperatingSystem.IsWindows())
+            {
+                InvokeCommand.InvokeScript("Microsoft.PowerShell.Management\\Set-Service");
+                return;
+            }
+
             string rawName  = ParameterSetName == "InputObject" ? InputObject!.ServiceName : Name!;
             string unitName = SystemdHelper.ResolveUnitName(rawName);
 
