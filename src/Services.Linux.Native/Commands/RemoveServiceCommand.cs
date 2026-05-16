@@ -34,14 +34,14 @@ namespace Microsoft.PowerShell.Commands
             catch (Exception ex)
             {
                 // Best-effort stop before deletion — non-terminating.
-                WriteWarning($"Could not stop {unitName} before removal: {ex.Message}");
+                WriteWarning(ErrorMessages.Format(ErrorMessages.UnitOperationFailed, "Stop", unitName, ex.Message));
             }
 
             try { SystemdHelper.DisableUnits(conn, new[] { unitName }); }
             catch (Exception ex)
             {
                 // Best-effort disable before deletion — non-terminating.
-                WriteWarning($"Could not disable {unitName} before removal: {ex.Message}");
+                WriteWarning(ErrorMessages.Format(ErrorMessages.UnitOperationFailed, "Disable", unitName, ex.Message));
             }
 
             try { SystemdHelper.RemoveUnitFile(unitName); }
@@ -49,7 +49,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 WriteError(new ErrorRecord(
                     new InvalidOperationException(
-                        $"Failed to remove unit file for {unitName}: {ex.Message}", ex),
+                        ErrorMessages.Format(ErrorMessages.UnitFileRemoveFailed, unitName, ex.Message), ex),
                     "UnitFileRemoveFailed", ErrorCategory.WriteError, unitName));
                 return;
             }
@@ -58,7 +58,7 @@ namespace Microsoft.PowerShell.Commands
             catch (InvalidOperationException ex) when (ex.Message.Contains("root privileges"))
             {
                 WriteError(new ErrorRecord(
-                    new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
+                    new PSSecurityException(ErrorMessages.Format(ErrorMessages.ElevationRequired, MyInvocation.MyCommand.Name)),
                     "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
                 return;
             }
@@ -66,7 +66,7 @@ namespace Microsoft.PowerShell.Commands
             {
                 WriteError(new ErrorRecord(
                     new InvalidOperationException(
-                        $"Removed unit file but daemon-reload failed: {ex.Message}", ex),
+                        ErrorMessages.Format(ErrorMessages.DaemonReloadAfterRemoveFailed, ex.Message), ex),
                     "DaemonReloadFailed", ErrorCategory.OperationStopped, unitName));
             }
         }

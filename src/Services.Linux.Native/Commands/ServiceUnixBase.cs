@@ -54,13 +54,13 @@ namespace Microsoft.PowerShell.Commands
             {
                 string cmdletName = $"{operation}-Service";
                 WriteError(new ErrorRecord(
-                    new PSSecurityException($"{cmdletName} requires root privileges."),
+                    new PSSecurityException(ErrorMessages.Format(ErrorMessages.ElevationRequired, cmdletName)),
                     "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
                 return;
             }
             WriteError(new ErrorRecord(
                 new InvalidOperationException(
-                    $"{operation} {unitName} failed: {ex.Message}", ex),
+                    ErrorMessages.Format(ErrorMessages.UnitOperationFailed, operation, unitName, ex.Message), ex),
                 "DBusOperationFailed", ErrorCategory.OperationStopped, unitName));
         }
     }

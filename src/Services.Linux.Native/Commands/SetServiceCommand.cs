@@ -58,7 +58,7 @@ namespace Microsoft.PowerShell.Commands
                 catch (InvalidOperationException ex) when (ex.Message.Contains("root privileges"))
                 {
                     WriteError(new ErrorRecord(
-                        new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
+                        new PSSecurityException(ErrorMessages.Format(ErrorMessages.ElevationRequired, MyInvocation.MyCommand.Name)),
                         "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
                     return;
                 }
@@ -66,7 +66,7 @@ namespace Microsoft.PowerShell.Commands
                 {
                     WriteError(new ErrorRecord(
                         new InvalidOperationException(
-                            $"Could not change startup type for {unitName}: {ex.Message}", ex),
+                            ErrorMessages.Format(ErrorMessages.StartupTypeChangeFailed, unitName, ex.Message), ex),
                         "DBusOperationFailed", ErrorCategory.OperationStopped, unitName));
                     return;
                 }
@@ -84,7 +84,7 @@ namespace Microsoft.PowerShell.Commands
                 catch (InvalidOperationException ex) when (ex.Message.Contains("root privileges"))
                 {
                     WriteError(new ErrorRecord(
-                        new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
+                        new PSSecurityException(ErrorMessages.Format(ErrorMessages.ElevationRequired, MyInvocation.MyCommand.Name)),
                         "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
                     return;
                 }
@@ -92,7 +92,7 @@ namespace Microsoft.PowerShell.Commands
                 {
                     WriteError(new ErrorRecord(
                         new InvalidOperationException(
-                            $"Could not set status for {unitName}: {ex.Message}", ex),
+                            ErrorMessages.Format(ErrorMessages.StatusChangeFailed, unitName, ex.Message), ex),
                         "DBusOperationFailed", ErrorCategory.OperationStopped, unitName));
                     return;
                 }

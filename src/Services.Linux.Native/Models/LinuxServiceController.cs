@@ -365,12 +365,12 @@ namespace Microsoft.PowerShell.Commands
             foreach (var arg in arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries))
                 psi.ArgumentList.Add(arg);
             using var process = Process.Start(psi)
-                ?? throw new InvalidOperationException($"Failed to start systemctl {arguments}.");
+                ?? throw new InvalidOperationException(ErrorMessages.Format(ErrorMessages.SubprocessFailed, "systemctl", "failed to start", 0));
             string stdout = process.StandardOutput.ReadToEnd();
             string stderr = process.StandardError.ReadToEnd();
             process.WaitForExit(10000);
             if (process.ExitCode != 0)
-                throw new InvalidOperationException($"systemctl {arguments} failed (exit {process.ExitCode}): {stderr.Trim()}");
+                throw new InvalidOperationException(ErrorMessages.Format(ErrorMessages.SubprocessFailed, "systemctl", stderr.Trim(), process.ExitCode));
             return stdout;
         }
 
