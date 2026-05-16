@@ -30,14 +30,6 @@ namespace Microsoft.PowerShell.Commands
 
             if (!ShouldProcess(unitName, "Create systemd service unit")) return;
 
-            if (!Utils.IsAdministrator())
-            {
-                WriteError(new ErrorRecord(
-                    new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
-                    "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
-                return;
-            }
-
             try
             {
                 SystemdHelper.WriteUnitFile(unitName, Description, BinaryPathName);
@@ -57,6 +49,13 @@ namespace Microsoft.PowerShell.Commands
             {
                 SystemdHelper.DaemonReload(conn);
             }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("root privileges"))
+            {
+                WriteError(new ErrorRecord(
+                    new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
+                    "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
+                return;
+            }
             catch (Exception ex)
             {
                 WriteError(new ErrorRecord(
@@ -69,6 +68,13 @@ namespace Microsoft.PowerShell.Commands
             if (StartupType == ServiceStartupType.Automatic)
             {
                 try { SystemdHelper.EnableUnits(conn, new[] { unitName }); }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("root privileges"))
+                {
+                    WriteError(new ErrorRecord(
+                        new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
+                        "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
+                    return;
+                }
                 catch (Exception ex)
                 {
                     WriteError(new ErrorRecord(

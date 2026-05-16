@@ -38,14 +38,6 @@ namespace Microsoft.PowerShell.Commands
 
             if (!ShouldProcess(unitName, "Set")) return;
 
-            if (!Utils.IsAdministrator())
-            {
-                WriteError(new ErrorRecord(
-                    new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
-                    "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
-                return;
-            }
-
             using DBusConnection conn = SystemdHelper.OpenSystem();
 
             if (StartupType != ServiceStartupType.InvalidValue)
@@ -56,6 +48,20 @@ namespace Microsoft.PowerShell.Commands
                         SystemdHelper.DisableUnits(conn, new[] { unitName });
                     else
                         SystemdHelper.EnableUnits(conn, new[] { unitName });
+                }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("root privileges"))
+                {
+                    WriteError(new ErrorRecord(
+                        new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
+                        "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
+                    return;
+                }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("root privileges"))
+                {
+                    WriteError(new ErrorRecord(
+                        new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
+                        "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
+                    return;
                 }
                 catch (Exception ex)
                 {
@@ -75,6 +81,13 @@ namespace Microsoft.PowerShell.Commands
                         SystemdHelper.StartUnit(conn, unitName);
                     else
                         SystemdHelper.StopUnit(conn, unitName);
+                }
+                catch (InvalidOperationException ex) when (ex.Message.Contains("root privileges"))
+                {
+                    WriteError(new ErrorRecord(
+                        new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
+                        "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
+                    return;
                 }
                 catch (Exception ex)
                 {

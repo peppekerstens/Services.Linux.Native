@@ -22,14 +22,6 @@ namespace Microsoft.PowerShell.Commands
 
             if (!ShouldProcess(unitName, "Stop, disable, and delete systemd service unit")) return;
 
-            if (!Utils.IsAdministrator())
-            {
-                WriteError(new ErrorRecord(
-                    new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
-                    "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
-                return;
-            }
-
             using DBusConnection conn = SystemdHelper.OpenSystem();
 
             try { SystemdHelper.StopUnit(conn, unitName); }
@@ -49,6 +41,13 @@ namespace Microsoft.PowerShell.Commands
             }
 
             try { SystemdHelper.DaemonReload(conn); }
+            catch (InvalidOperationException ex) when (ex.Message.Contains("root privileges"))
+            {
+                WriteError(new ErrorRecord(
+                    new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
+                    "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
+                return;
+            }
             catch (Exception ex)
             {
                 WriteError(new ErrorRecord(

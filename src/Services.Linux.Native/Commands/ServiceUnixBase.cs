@@ -43,6 +43,14 @@ namespace Microsoft.PowerShell.Commands
 
         protected void WriteDBusError(string unitName, string operation, Exception ex)
         {
+            if (ex is InvalidOperationException && ex.Message.Contains("root privileges"))
+            {
+                string cmdletName = $"{operation}-Service";
+                WriteError(new ErrorRecord(
+                    new PSSecurityException($"{cmdletName} requires root privileges."),
+                    "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
+                return;
+            }
             WriteError(new ErrorRecord(
                 new InvalidOperationException(
                     $"{operation} {unitName} failed: {ex.Message}", ex),
