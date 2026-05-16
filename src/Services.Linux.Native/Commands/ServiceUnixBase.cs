@@ -10,6 +10,7 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(Mandatory = true, Position = 0, ParameterSetName = "Name",
             ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
         [ValidateNotNullOrEmpty]
+        [Alias("ServiceName")]
         public string[]? Name { get; set; }
 
         [Parameter(Mandatory = true, ParameterSetName = "InputObject",
@@ -46,6 +47,16 @@ namespace Microsoft.PowerShell.Commands
         {
             foreach (var svc in SystemdHelper.GetServices(new[] { unitName }))
                 WriteObject(svc);
+        }
+
+        /// <summary>
+        /// Formats a unit name for ShouldProcess display by stripping the .service suffix.
+        /// </summary>
+        internal static string FormatShouldProcessTarget(string unitName)
+        {
+            if (unitName.EndsWith(".service", StringComparison.OrdinalIgnoreCase))
+                return unitName.Substring(0, unitName.Length - 8);
+            return unitName;
         }
 
         protected void WriteDBusError(string unitName, string operation, Exception ex)

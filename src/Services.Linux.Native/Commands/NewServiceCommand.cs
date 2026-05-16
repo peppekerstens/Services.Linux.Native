@@ -16,6 +16,7 @@ namespace Microsoft.PowerShell.Commands
     {
         [Parameter(Mandatory = true, Position = 0)]
         [ValidateNotNullOrEmpty]
+        [Alias("ServiceName")]
         public string Name { get; set; } = string.Empty;
 
         [Parameter(Mandatory = true)]
@@ -37,7 +38,7 @@ namespace Microsoft.PowerShell.Commands
 
             string unitName = SystemdHelper.ResolveUnitName(Name);
 
-            if (!ShouldProcess(unitName, "Create systemd service unit")) return;
+            if (!ShouldProcess(ServiceUnixBase.FormatShouldProcessTarget(unitName), "Create systemd service unit")) return;
 
             try
             {

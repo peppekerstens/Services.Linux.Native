@@ -17,6 +17,7 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(Mandatory = true, Position = 0, ParameterSetName = "Name",
             ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
         [ValidateNotNullOrEmpty]
+        [Alias("ServiceName")]
         public string? Name { get; set; }
 
         [Parameter(Mandatory = true, ParameterSetName = "InputObject",
@@ -44,7 +45,7 @@ namespace Microsoft.PowerShell.Commands
             string rawName  = ParameterSetName == "InputObject" ? InputObject!.ServiceName : Name!;
             string unitName = SystemdHelper.ResolveUnitName(rawName);
 
-            if (!ShouldProcess(unitName, "Set")) return;
+            if (!ShouldProcess(ServiceUnixBase.FormatShouldProcessTarget(unitName), "Set")) return;
 
             using DBusConnection conn = SystemdHelper.OpenSystem();
 

@@ -17,6 +17,7 @@ namespace Microsoft.PowerShell.Commands
         [Parameter(Mandatory = true, Position = 0,
             ValueFromPipeline = true, ValueFromPipelineByPropertyName = true)]
         [ValidateNotNullOrEmpty]
+        [Alias("ServiceName")]
         public string Name { get; set; } = string.Empty;
 
         protected override void ProcessRecord()
@@ -29,7 +30,7 @@ namespace Microsoft.PowerShell.Commands
 
             string unitName = SystemdHelper.ResolveUnitName(Name);
 
-            if (!ShouldProcess(unitName, "Stop, disable, and delete systemd service unit")) return;
+            if (!ShouldProcess(ServiceUnixBase.FormatShouldProcessTarget(unitName), "Stop, disable, and delete systemd service unit")) return;
 
             using DBusConnection conn = SystemdHelper.OpenSystem();
 

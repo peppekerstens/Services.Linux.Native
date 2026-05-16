@@ -14,7 +14,7 @@ namespace Microsoft.PowerShell.Commands
     {
         protected override void OperateOnService(string unitName)
         {
-            if (!ShouldProcess(unitName, "Restart")) return;
+            if (!ShouldProcess(FormatShouldProcessTarget(unitName), "Restart")) return;
             try   { SystemdHelper.RestartUnit(unitName); }
             catch (Exception ex) { WriteDBusError(unitName, "Restart", ex); return; }
             if (PassThru) EmitServiceInfo(unitName);

@@ -14,7 +14,7 @@ namespace Microsoft.PowerShell.Commands
     {
         protected override void OperateOnService(string unitName)
         {
-            if (!ShouldProcess(unitName, "Stop")) return;
+            if (!ShouldProcess(FormatShouldProcessTarget(unitName), "Stop")) return;
             try   { SystemdHelper.StopUnit(unitName); }
             catch (Exception ex) { WriteDBusError(unitName, "Stop", ex); return; }
             if (PassThru) EmitServiceInfo(unitName);

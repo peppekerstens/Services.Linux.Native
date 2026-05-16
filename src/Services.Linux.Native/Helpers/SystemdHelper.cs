@@ -60,7 +60,8 @@ namespace Microsoft.PowerShell.Commands
                         reader.ReadUInt32();
                         reader.ReadString();
                         reader.ReadObjectPath();
-                        if (name.EndsWith(".service", StringComparison.OrdinalIgnoreCase))
+                        if (name.EndsWith(".service", StringComparison.OrdinalIgnoreCase)
+                            && !name.Contains("@."))
                             list.Add((name, desc, active, sub));
                     }
                     return list;
