@@ -19,7 +19,6 @@ namespace Microsoft.PowerShell.Commands
         private LinuxServiceController[]? _dependentServices;
         private LinuxServiceController[]? _servicesDependedOn;
         private string? _serviceType;
-        private LinuxServiceType? _unitType;
         private bool _refreshed;
 
         /// <summary>
@@ -173,7 +172,9 @@ namespace Microsoft.PowerShell.Commands
         }
 
         /// <summary>
-        /// The systemd unit type (e.g. "simple", "forking", "oneshot").
+        /// The systemd unit type (e.g. Simple, Forking, Oneshot).
+        /// Uses Linux-native enum values with distinct numeric range (1000+)
+        /// to avoid confusion with Windows ServiceType values.
         /// </summary>
         public ServiceType ServiceType
         {
@@ -186,42 +187,15 @@ namespace Microsoft.PowerShell.Commands
                 }
                 return _serviceType switch
                 {
-                    "simple"   => ServiceType.Win32OwnProcess,
-                    "forking"  => ServiceType.Win32ShareProcess,
-                    "oneshot"  => ServiceType.Win32OwnProcess,
-                    "dbus"     => ServiceType.Win32OwnProcess,
-                    "notify"   => ServiceType.Win32OwnProcess,
-                    "idle"     => ServiceType.Win32OwnProcess,
-                    _          => ServiceType.InteractiveProcess,
+                    "simple"   => ServiceType.Simple,
+                    "forking"  => ServiceType.Forking,
+                    "oneshot"  => ServiceType.Oneshot,
+                    "dbus"     => ServiceType.DBus,
+                    "notify"   => ServiceType.Notify,
+                    "idle"     => ServiceType.Idle,
+                    "exec"     => ServiceType.Exec,
+                    _          => ServiceType.Unknown,
                 };
-            }
-        }
-
-        /// <summary>
-        /// The systemd unit type (e.g. Simple, Forking, Oneshot).
-        /// Uses Linux-native enum values instead of Windows ServiceType.
-        /// </summary>
-        public LinuxServiceType UnitType
-        {
-            get
-            {
-                if (_unitType is null)
-                {
-                    string output = RunSystemctl($"show -p Type --value --no-pager {ServiceName}");
-                    string type = output.Trim();
-                    _unitType = type switch
-                    {
-                        "simple"   => LinuxServiceType.Simple,
-                        "forking"  => LinuxServiceType.Forking,
-                        "oneshot"  => LinuxServiceType.Oneshot,
-                        "dbus"     => LinuxServiceType.DBus,
-                        "notify"   => LinuxServiceType.Notify,
-                        "idle"     => LinuxServiceType.Idle,
-                        "exec"     => LinuxServiceType.Exec,
-                        _          => LinuxServiceType.Unknown,
-                    };
-                }
-                return _unitType.Value;
             }
         }
 
@@ -273,7 +247,6 @@ namespace Microsoft.PowerShell.Commands
             _dependentServices = null;
             _servicesDependedOn = null;
             _serviceType = null;
-            _unitType = null;
         }
 
         /// <summary>

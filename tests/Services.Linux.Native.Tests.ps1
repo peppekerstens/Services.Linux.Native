@@ -102,17 +102,23 @@ Describe 'Output types' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
         $svc.Status | Should -BeOfType [Microsoft.PowerShell.Commands.ServiceControllerStatus]
     }
 
-    It 'UnitType is LinuxServiceType enum' {
+    It 'ServiceType is Linux-native ServiceType enum' {
         $svc = Get-Service -Name ssh* | Select-Object -First 1
         $svc | Should -Not -BeNullOrEmpty
-        $svc.UnitType | Should -BeOfType [Microsoft.PowerShell.Commands.LinuxServiceType]
+        $svc.ServiceType | Should -BeOfType [Microsoft.PowerShell.Commands.ServiceType]
     }
 
-    It 'UnitType has a valid Linux-native value' {
+    It 'ServiceType has a valid Linux-native value' {
         $svc = Get-Service -Name ssh* | Select-Object -First 1
         $svc | Should -Not -BeNullOrEmpty
         $validTypes = @('Simple', 'Forking', 'Oneshot', 'DBus', 'Notify', 'Idle', 'Exec', 'Unknown')
-        $svc.UnitType.ToString() | Should -BeIn $validTypes
+        $svc.ServiceType.ToString() | Should -BeIn $validTypes
+    }
+
+    It 'ServiceType underlying value is in Linux range (1000+)' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+        [int]$svc.ServiceType | Should -BeGreaterOrEqual 1000
     }
 
     It 'StartType is ServiceStartupType enum' {
@@ -279,6 +285,40 @@ Describe 'Elevation errors' -Skip:($script:IsRoot -or -not $script:OnLinux) {
         $err[0].Exception.Message | Should -Be 'Remove-Service requires root privileges.'
         $err[0].FullyQualifiedErrorId | Should -Be 'UnauthorizedAccess,Microsoft.PowerShell.Commands.RemoveServiceCommand'
         $err[0].CategoryInfo.Category | Should -Be 'SecurityError'
+    }
+}
+
+Describe 'Foundational Principle: Native .NET APIs First' -Skip:(-not ($script:OnLinux -and $script:hasDBus)) {
+    BeforeAll {
+        $script:ModulePath = Join-Path $PSScriptRoot '..' 'src' 'Services.Linux.Native' 'bin' 'Release' 'net8.0' 'Services.Linux.Native.dll'
+    }
+
+    It 'SystemdHelper uses D-Bus for write operations (no subprocess)' {
+        # Verify the module uses Tmds.DBus.Protocol for write operations
+        # by checking that StartUnit/StopUnit/RestartUnit methods exist and work via D-Bus
+        $dll = [System.Reflection.Assembly]::LoadFrom($script:ModulePath)
+        $helperType = $dll.GetType('Microsoft.PowerShell.Commands.SystemdHelper')
+        $helperType | Should -Not -BeNullOrEmpty
+
+        # Verify D-Bus write methods exist (not subprocess wrappers)
+        $startMethod = $helperType.GetMethod('StartUnit', [string])
+        $stopMethod = $helperType.GetMethod('StopUnit', [string])
+        $restartMethod = $helperType.GetMethod('RestartUnit', [string])
+
+        $startMethod | Should -Not -BeNullOrEmpty
+        $stopMethod | Should -Not -BeNullOrEmpty
+        $restartMethod | Should -Not -BeNullOrEmpty
+    }
+
+    It 'ServiceType returns Linux-native values (not Windows ServiceType)' {
+        $svc = Get-Service -Name ssh* | Select-Object -First 1
+        $svc | Should -Not -BeNullOrEmpty
+
+        # Verify ServiceType is our custom Linux enum, not Windows System.ServiceProcess.ServiceType
+        $svc.ServiceType.GetType().Assembly | Should -Be $svc.GetType().Assembly
+
+        # Verify underlying value is in Linux range (1000+)
+        [int]$svc.ServiceType | Should -BeGreaterOrEqual 1000
     }
 }
 

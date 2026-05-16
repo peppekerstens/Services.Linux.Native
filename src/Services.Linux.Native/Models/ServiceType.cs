@@ -4,18 +4,18 @@
 namespace Microsoft.PowerShell.Commands
 {
     /// <summary>
-    /// Indicates the type of service.
-    /// Values match System.ServiceProcess.ServiceType for cross-platform alignment.
+    /// Indicates the type of a Linux systemd service.
+    /// Values are distinct from Windows ServiceType to avoid cross-platform confusion.
     /// </summary>
-    [System.Flags]
     public enum ServiceType
     {
-        Adapter = 4,
-        FileSystemDriver = 2,
-        InteractiveProcess = 256,
-        KernelDriver = 1,
-        RecognizerDriver = 8,
-        Win32OwnProcess = 16,
-        Win32ShareProcess = 32,
+        Simple = 1001,
+        Forking = 1002,
+        Oneshot = 1003,
+        DBus = 1004,
+        Notify = 1005,
+        Idle = 1006,
+        Exec = 1007,
+        Unknown = 1000,
     }
 }
