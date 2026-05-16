@@ -219,7 +219,15 @@ namespace Microsoft.PowerShell.Commands
         private static async Task EnableUnitsAsync(DBusConnection conn, string[] unitNames)
         {
             var msg = BuildEnableMessage(conn, unitNames, runtime: false, force: false);
-            await conn.CallMethodAsync(msg, static (Message m, object? _) => 0).ConfigureAwait(false);
+            try
+            {
+                await conn.CallMethodAsync(msg, static (Message m, object? _) => 0).ConfigureAwait(false);
+            }
+            catch (DBusExceptionBase ex) when (ex.Message.Contains("InteractiveAuthorizationRequired"))
+            {
+                throw new InvalidOperationException(
+                    "EnableUnitFiles failed: root privileges are required. Use 'sudo pwsh'.", ex);
+            }
         }
 
         // PS runspace has no SynchronizationContext; blocking .GetAwaiter().GetResult() is safe here.
@@ -237,7 +245,15 @@ namespace Microsoft.PowerShell.Commands
         private static async Task DisableUnitsAsync(DBusConnection conn, string[] unitNames)
         {
             var msg = BuildDisableMessage(conn, unitNames, runtime: false);
-            await conn.CallMethodAsync(msg, static (Message m, object? _) => 0).ConfigureAwait(false);
+            try
+            {
+                await conn.CallMethodAsync(msg, static (Message m, object? _) => 0).ConfigureAwait(false);
+            }
+            catch (DBusExceptionBase ex) when (ex.Message.Contains("InteractiveAuthorizationRequired"))
+            {
+                throw new InvalidOperationException(
+                    "DisableUnitFiles failed: root privileges are required. Use 'sudo pwsh'.", ex);
+            }
         }
 
         // PS runspace has no SynchronizationContext; blocking .GetAwaiter().GetResult() is safe here.
@@ -250,7 +266,15 @@ namespace Microsoft.PowerShell.Commands
         internal static void DaemonReload(DBusConnection conn)
         {
             var msg = BuildCall(conn, "Reload");
-            conn.CallMethodAsync(msg, static (Message m, object? _) => 0).GetAwaiter().GetResult();
+            try
+            {
+                conn.CallMethodAsync(msg, static (Message m, object? _) => 0).GetAwaiter().GetResult();
+            }
+            catch (DBusExceptionBase ex) when (ex.Message.Contains("InteractiveAuthorizationRequired"))
+            {
+                throw new InvalidOperationException(
+                    "DaemonReload failed: root privileges are required. Use 'sudo pwsh'.", ex);
+            }
         }
 
         internal static void WriteUnitFile(string unitName, string description, string execStart)

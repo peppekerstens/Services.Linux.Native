@@ -38,6 +38,14 @@ namespace Microsoft.PowerShell.Commands
 
             if (!ShouldProcess(unitName, "Set")) return;
 
+            if (!Utils.IsAdministrator())
+            {
+                WriteError(new ErrorRecord(
+                    new PSSecurityException($"{MyInvocation.MyCommand.Name} requires root privileges."),
+                    "ElevationRequired", ErrorCategory.PermissionDenied, unitName));
+                return;
+            }
+
             using DBusConnection conn = SystemdHelper.OpenSystem();
 
             if (StartupType != ServiceStartupType.InvalidValue)
