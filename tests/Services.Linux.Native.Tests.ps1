@@ -282,6 +282,24 @@ Describe 'Elevation errors' -Skip:($script:IsRoot -or -not $script:OnLinux) {
     }
 }
 
+Describe 'Rule 12: HelpUri and RemotingCapability' -Skip:(-not $script:OnLinux) {
+    BeforeAll {
+        $script:Cmds = Get-Command -Module Services.Linux.Native
+    }
+
+    It 'All cmdlets declare HelpUri' {
+        foreach ($c in $script:Cmds) {
+            $c.HelpUri | Should -Not -BeNullOrEmpty -Because "$($c.Name) must have HelpUri"
+        }
+    }
+
+    It 'All cmdlets declare RemotingCapability' {
+        foreach ($c in $script:Cmds) {
+            $c.RemotingCapability | Should -Not -BeNullOrEmpty -Because "$($c.Name) must have RemotingCapability"
+        }
+    }
+}
+
 Describe 'Module loads on Windows' -Skip:$script:OnLinux {
     It 'imports without error' {
         { Import-Module $script:ModulePath -Force -EA Stop } | Should -Not -Throw
