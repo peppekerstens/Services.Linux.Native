@@ -7,8 +7,11 @@ using Tmds.DBus.Protocol;
 
 namespace Microsoft.PowerShell.Commands
 {
-    [Cmdlet(VerbsCommon.Remove, "Service", SupportsShouldProcess = true,
-        ConfirmImpact = ConfirmImpact.High)]
+    [Cmdlet(VerbsCommon.Remove, "Service",
+        SupportsShouldProcess = true,
+        ConfirmImpact = ConfirmImpact.High,
+        HelpUri = "https://github.com/peppekerstens/Services.Linux.Native",
+        RemotingCapability = RemotingCapability.SupportedByCommand)]
     public sealed class RemoveServiceCommand : PSCmdlet
     {
         [Parameter(Mandatory = true, Position = 0,

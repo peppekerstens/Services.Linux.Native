@@ -5,7 +5,9 @@ using System.Management.Automation;
 
 namespace Microsoft.PowerShell.Commands
 {
-    [Cmdlet(VerbsLifecycle.Suspend, "Service", DefaultParameterSetName = "Name")]
+    [Cmdlet(VerbsLifecycle.Suspend, "Service", DefaultParameterSetName = "Name",
+        HelpUri = "https://github.com/peppekerstens/Services.Linux.Native",
+        RemotingCapability = RemotingCapability.SupportedByCommand)]
     [OutputType(typeof(LinuxServiceController))]
     public sealed class SuspendServiceCommand : ServiceUnixBase
     {

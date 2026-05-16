@@ -6,7 +6,9 @@ using System.Management.Automation;
 namespace Microsoft.PowerShell.Commands
 {
     [Cmdlet(VerbsLifecycle.Restart, "Service", DefaultParameterSetName = "Name",
-        SupportsShouldProcess = true)]
+        SupportsShouldProcess = true,
+        HelpUri = "https://github.com/peppekerstens/Services.Linux.Native",
+        RemotingCapability = RemotingCapability.SupportedByCommand)]
     [OutputType(typeof(LinuxServiceController))]
     public sealed class RestartServiceCommand : ServiceUnixBase
     {

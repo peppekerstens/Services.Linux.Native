@@ -7,7 +7,10 @@ using Tmds.DBus.Protocol;
 
 namespace Microsoft.PowerShell.Commands
 {
-    [Cmdlet(VerbsCommon.New, "Service", SupportsShouldProcess = true)]
+    [Cmdlet(VerbsCommon.New, "Service",
+        SupportsShouldProcess = true,
+        HelpUri = "https://github.com/peppekerstens/Services.Linux.Native",
+        RemotingCapability = RemotingCapability.SupportedByCommand)]
     [OutputType(typeof(LinuxServiceController))]
     public sealed class NewServiceCommand : PSCmdlet
     {
