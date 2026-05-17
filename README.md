@@ -180,7 +180,7 @@ All write cmdlets (`Start/Stop/Restart/Set/New/Remove-Service`) translate D-Bus 
 | 0.1.0 | Initial release. 7 full cmdlets, 2 stubs. D-Bus via `Tmds.DBus.Protocol` 0.93.0. 20 Pester tests. `dotnet publish` required for dependency resolution. |
 | 0.1.1 | Code review fixes: `ConfigureAwait(false)` on all async calls; shared D-Bus connection for compound cmdlets; `IsNonRoot()` + `GetUserUnitDir()` for non-root unit file paths; removed dead `LU_*` constants. |
 | 0.1.2 | Copyright headers added; `SupportsShouldProcess` removed from stubs; template units (`@.`) excluded from `Get-Service`; D-Bus polkit errors translated to `"root privileges are required."` for Start/Stop/Restart; elevation error tests added; Windows pester skip added. |
-| 0.2.0 (pending) | Issue #29: `EnableUnits`/`DisableUnits` and `DaemonReload` polkit error translation. `Status` type change from `string` to `ServiceControllerStatus` (pending decision). |
+| 0.1.3 | `LinuxServiceController : Component` replaces `LinuxServiceInfo` (Rule 9). Added `Name` property (short name), `ServiceType` enum (Linux-native 1000+ range), `ServiceControllerStatus` enum. Error ID/category fixed (Rule 6). ErrorMessages class (Rule 11). Bare catch removal (Rule 7). `OperatingSystem.IsWindows()` guard (Rule 8). HelpUri/RemotingCapability (Rule 12). ShouldProcess display formatting (Rule 13). Template unit filtering (Rule 2). `STATUS.md` and `AGENTS.md` added. |
 
 ---
 

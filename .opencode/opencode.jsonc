@@ -1,0 +1,54 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "shell": "pwsh",
+  "instructions": ["AGENTS.md", "STATUS.md"],
+  "mcp": {
+    "github": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "enabled": true,
+      "headers": {
+        "X-GitHub-MCP-Toolsets": "repos,issues,pull_requests,actions"
+      }
+    }
+  },
+  "watcher": {
+    "ignore": [
+      ".git/**",
+      "bin/**",
+      "obj/**",
+      "out/**",
+      "**/*.nupkg",
+      "**/*.xml",
+      "packages-microsoft-prod.deb"
+    ]
+  },
+  "formatter": {
+    "powershell": {
+      "command": [
+        "pwsh",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "$file = '$FILE'; $dir = Split-Path $file; $settings = $null; while ($dir -and $dir -ne (Split-Path $dir)) { $candidate = Join-Path $dir 'PSScriptAnalyzerSettings.psd1'; if (Test-Path $candidate) { $settings = $candidate; break }; $dir = Split-Path $dir }; $content = Get-Content $file -Raw; $formatted = if ($settings) { Invoke-Formatter -ScriptDefinition $content -Settings $settings } else { Invoke-Formatter -ScriptDefinition $content }; [System.IO.File]::WriteAllText($file, $formatted, [System.Text.UTF8Encoding]::new($false))"
+      ],
+      "extensions": [".ps1", ".psm1", ".psd1"]
+    }
+  },
+  "lsp": {
+    "csharp": {
+      "command": ["dotnet", "build-server"],
+      "extensions": [".cs"]
+    },
+    "powershell": {
+      "command": [
+        "pwsh",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "$pses = Get-ChildItem -Path '/home/peppe/.vscode/extensions/ms-vscode.powershell-*/modules/PowerShellEditorServices/Start-EditorServices.ps1' -ErrorAction SilentlyContinue | Select-Object -First 1; if ($pses) { & $pses.FullName -HostName opencode -HostProfileId opencode -HostVersion 1.0.0 -EditorServicesModulePath (Split-Path $pses.FullName) -Stdio -LogPath /tmp/pses-opencode.log -LogLevel Warning -FeatureFlags '' } else { Write-Error 'PSES not found' }"
+      ],
+      "extensions": [".ps1", ".psm1", ".psd1"]
+    }
+  }
+}

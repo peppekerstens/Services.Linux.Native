@@ -1,16 +1,25 @@
-# Linux Development Rules — Services.Linux.Native
-
-This repo follows the Stage 6 Linux Development Rules defined in the
-opencode coordination repo. All 22 rules apply to this module.
-
-Full rules: `opencode/stage6/linux-rules.md` in the coordination repo.
-
----
-
 # Linux Development Rules
 
 Derived from manual testing findings across all Stage 6 C# binary modules.
 Applies to every Linux module — PowerShell and C#.
+
+---
+
+## Foundational Principle: Native .NET APIs First
+
+**HARD REQUIREMENT:** Always prefer native .NET APIs and direct system calls
+over spawning subprocesses. Let .NET handle the heavy lifting.
+
+- Use `Tmds.DBus.Protocol` for systemd communication — not `systemctl` subprocess
+- Use `System.IO`, `System.Net`, `System.Text.RegularExpressions` — not `grep`, `awk`, `sed`
+- Use `LibraryImport` P/Invoke for libc calls — not shell wrappers
+- Subprocess (`Process.Start`) is a **last resort** only when no .NET API exists
+- This applies to ALL Linux modules, not just Services
+
+**Rationale:** Subprocess calls add overhead, string parsing complexity, culture
+sensitivity issues, and deviate from the Windows model. Native APIs are faster,
+type-safe, and maintainable. Windows cmdlets call Win32 APIs directly — Linux
+cmdlets must do the same with native Linux APIs.
 
 ---
 
@@ -71,37 +80,40 @@ This applies to any module that enumerates systemd units.
 
 ---
 
-## Rule 3: Polkit-protected operations require subprocess, not raw D-Bus
+## Rule 3: Use native .NET APIs and direct system calls — no subprocess fallback
 
-D-Bus system bus calls for `StartUnit`, `StopUnit`, `RestartUnit`,
-`EnableUnitFiles`, and `DisableUnitFiles` are polkit-protected.
+**HARD REQUIREMENT:** Always prefer native .NET APIs and direct system calls
+over spawning subprocesses. Let .NET handle the heavy lifting.
 
-**Finding:** Non-root users calling these via `Tmds.DBus.Protocol` get:
-```
-org.freedesktop.DBus.Error.InteractiveAuthorizationRequired:
-Access denied as the requested operation requires interactive authentication.
-However, interactive authentication has not been enabled by the calling program.
-```
+**Finding (anti-pattern):** Early versions of this module considered using
+`systemctl` subprocess for write operations because D-Bus polkit errors lack
+an interactive agent. This was rejected.
 
-`Tmds.DBus.Protocol` has no polkit agent. It cannot prompt for credentials.
+**Windows precedent:** `ServiceController` calls `advapi32.dll` directly.
+It does not spawn `sc.exe`. Linux modules must follow the same pattern.
 
-**Fix:** Use `systemctl` subprocess for write operations. `systemctl` has a
-built-in polkit agent that handles terminal password prompts correctly.
-
+**Correct approach:**
 ```csharp
-var psi = new ProcessStartInfo
+// Use Tmds.DBus.Protocol to call systemd directly
+// Catch polkit errors reactively and translate to user-friendly messages
+try
 {
-    FileName = "systemctl",
-    ArgumentList = { action, unitName },
-    RedirectStandardOutput = true,
-    RedirectStandardError = true,
-    UseShellExecute = false,
-};
-// Read stdout/stderr concurrently. Check exit code.
+    await conn.CallMethodAsync(msg).ConfigureAwait(false);
+}
+catch (DBusExceptionBase ex) when (ex.Message.Contains("InteractiveAuthorizationRequired"))
+{
+    throw new InvalidOperationException(
+        $"{operation} failed: root privileges are required. Use 'sudo pwsh'.", ex);
+}
 ```
 
-Read operations (`ListUnits`, `ListUnitFiles`) stay on D-Bus. They are
-polkit-exempt and faster for bulk enumeration.
+**Subprocess is a last resort** — only when no .NET API or native library
+exists for the task. Even then, prefer P/Invoke (`LibraryImport`) over
+`Process.Start`.
+
+**Rationale:** Subprocess calls add overhead, string parsing complexity,
+culture sensitivity issues, and deviate from the Windows model. Native
+APIs are faster, type-safe, and maintainable.
 
 ---
 
@@ -301,13 +313,32 @@ Interpolate using `string.Format(CultureInfo.InvariantCulture, ...)`.
 `HelpUri = "https://go.microsoft.com/fwlink/?LinkID=..."` and
 `RemotingCapability = RemotingCapability.SupportedByCommand`.
 
-**Standalone repo:** Use a repo-specific URL:
+**Standalone repo approach — layered documentation:**
+
+**Phase 1 (MVP — current):** Point `HelpUri` to the canonical Microsoft Learn
+page for the Windows equivalent cmdlet. Since our cmdlets are designed to match
+Windows behavior, the Microsoft docs are authoritative for the shared surface
+(parameters, syntax, examples).
+
 ```csharp
 [Cmdlet(VerbsLifecycle.Start, "Service",
     SupportsShouldProcess = true,
-    HelpUri = "https://github.com/peppekerstens/Services.Linux.Native",
+    HelpUri = "https://learn.microsoft.com/powershell/module/microsoft.powershell.management/start-service",
     RemotingCapability = RemotingCapability.SupportedByCommand)]
 ```
+
+**Phase 2 (future):** A dedicated docs site (GitHub Pages + PlatyPS) that
+documents only the **delta** — Linux-specific differences from Windows:
+- `ActiveState` / `SubState` properties (systemd-specific)
+- `UnitType` enum (`Simple`, `Forking`, `Oneshot`, etc.)
+- Elevation behavior (`sudo pwsh` vs "Run as Administrator")
+- Template unit filtering (`@.` pattern)
+- D-Bus vs Win32 API under the hood
+
+**Rationale:** No duplication of Microsoft-maintained content. Users get
+authoritative docs for the shared surface. Our docs stay small and focused
+on what actually differs. If Microsoft updates parameter docs, we don't
+need to track it.
 
 ---
 
@@ -502,3 +533,29 @@ namespace Microsoft.PowerShell.Commands
     }
 }
 ```
+
+---
+
+## Manual Testing Findings Log
+
+### 2026-05-16 — Services.Linux.Native elevation failures
+
+| Command | Error | Root Cause |
+|---|---|---|
+| `get-service \| where status -eq 'running' \| where name -eq 'cups-browsed.service' \| stop-service` | `InteractiveAuthorizationRequired` | D-Bus polkit-protected, no agent |
+| `get-service \| where status -eq 'stopped' \| where name -like 'gnome-remote-desktop-configuration.service' \| start-service` | `InteractiveAuthorizationRequired` | D-Bus polkit-protected, no agent |
+| `get-service \| where status -eq 'stopped' \| where name -like 'rsync.service' \| start-service` | `InteractiveAuthorizationRequired` | D-Bus polkit-protected, no agent |
+| `get-service \| where status -eq 'stopped' \| where name -like 'ppp*' \| start-service` | `InvalidArgs: Unit name ppp@.service is missing the instance name` | Template unit returned by `ListUnitFiles` |
+
+### 2026-05-16 — ScheduledTasks.Linux.Native pester failure
+
+| Test | Error | Root Cause |
+|---|---|---|
+| "Set-ScheduledTask writes an error record" | `NotImplementedException` thrown instead of `ErrorRecord` | Test not updated after issue #28 fix |
+
+### 2026-05-16 — PowerShell fork `Utils.IsAdministrator()`
+
+| Platform | Before | After |
+|---|---|---|
+| Windows | `WindowsPrincipal.IsInRole(Administrator)` | Unchanged |
+| Linux | Always `true` (no-op) | Checks effective UID via `/proc/self/status` |
