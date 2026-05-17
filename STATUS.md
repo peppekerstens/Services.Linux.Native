@@ -63,6 +63,8 @@ All write cmdlets translate D-Bus polkit `InteractiveAuthorizationRequired` erro
 | #45 | SHOULD | 9 cmdlet classes + `ServiceUnixBase` + enums lack XML docs |
 | #46 | SHOULD | `ListUnits` parser does not filter `@.` template units |
 
+**New audit issues:** [Issues #1–#8](https://github.com/peppekerstens/Services.Linux.Native/issues) (2 MUST, 6 SHOULD from code audit)
+
 ---
 
 ## Resolved Issues
